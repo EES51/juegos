@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>¿Quién Soy? - Edición Grupal</title>
+    <!-- Fuentes: Orbitron (Futurista) y Poppins (Legible) -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff0055;
+            --neon-violet: #bc13fe;
+            --card-bg: #111;
+            --glass-bg: rgba(20, 20, 25, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background-color: var(--bg-dark);
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 0, 85, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            overflow-x: hidden;
+            padding-bottom: 20px;
+        }
+
+        /* --- PANTALLAS (Vistas) --- */
+        .screen {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- HEADER COMÚN --- */
+        .header {
+            margin-top: 10px;
+            margin-bottom: 5px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            margin: 0;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--neon-blue);
+            background: linear-gradient(to right, var(--neon-blue), white);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- PANTALLA 1: SETUP --- */
+        .setup-container {
+            width: 90%;
+            max-width: 400px;
+            background: var(--glass-bg);
+            border: 1px solid var(--neon-blue);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+            margin-top: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-blue);
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        input[type="number"], input[type="text"] {
+            background: #000;
+            border: 1px solid #333;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.2);
+        }
+
+        .player-inputs-list {
+            max-height: 40vh;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .player-inputs-list::-webkit-scrollbar {
+            width: 5px;
+        }
+        .player-inputs-list::-webkit-scrollbar-thumb {
+            background: var(--neon-blue);
+            border-radius: 5px;
+        }
+
+        .action-btn {
+            background: transparent;
+            color: var(--neon-blue);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 800;
+            padding: 12px;
+            border: 2px solid var(--neon-blue);
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+            transition: 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 243, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
+        }
+
+        .action-btn.secondary {
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+        }
+
+        /* --- PANTALLA 2: JUEGO (Carta REDISEÑADA) --- */
+        .card-wrapper {
+            position: relative;
+            width: 90%;
+            max-width: 380px;
+            height: 65vh; /* Altura aumentada significativamente */
+            border-radius: 25px;
+            z-index: 5;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            margin: 10px 0;
+            flex-shrink: 0;
+        }
+
+        .card-border {
+            position: absolute;
+            inset: -3px;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink), var(--neon-violet), var(--neon-blue));
+            background-size: 400%;
+            border-radius: 28px;
+            z-index: -1;
+            animation: borderGlow 20s linear infinite;
+            filter: blur(8px);
+        }
+
+        @keyframes borderGlow {
+            0% { background-position: 0 0; }
+            50% { background-position: 100% 0; }
+            100% { background-position: 0 0; }
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg);
+            border-radius: 25px;
+            overflow: hidden;
+            position: relative;
+            /* display: flex; y flex-direction: column; eliminados */
+        }
+
+        .image-area {
+            width: 100%;
+            height: 100%; /* Ocupa toda la altura */
+            position: relative;
+            background: #000;
+        }
+
+        .character-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            display: none; 
+        }
+
+        .placeholder {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+            color: #333;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8rem;
+            font-weight: 900;
+        }
+
+        /* INFO SUPERPUESTA */
+        .info-area {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 10px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.6) 80%, transparent 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+            border-bottom-left-radius: 25px;
+            border-bottom-right-radius: 25px;
+        }
+
+        .char-id {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-blue);
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            opacity: 0.9;
+            margin-bottom: 2px;
+        }
+
+        .char-name {
+            font-family: 'Poppins', sans-serif;
+            color: #fff;
+            font-size: 1.4rem; 
+            font-weight: 700;
+            text-transform: uppercase;
+            line-height: 1.1;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        /* --- BOTÓN GIRAR INTEGRADO --- */
+        .spin-btn-overlay {
+            position: absolute;
+            bottom: 90px; /* Ajustado para estar sobre la info */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            width: auto;
+        }
+
+        .spin-btn {
+            background: rgba(0, 0, 0, 0.6); /* Fondo semi-transparente para contraste */
+            color: var(--neon-blue);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 800;
+            padding: 12px 40px;
+            border: 2px solid var(--neon-blue);
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+            transition: all 0.2s;
+            white-space: nowrap;
+            backdrop-filter: blur(2px);
+        }
+
+        .spin-btn:active {
+            transform: scale(0.95);
+            background: rgba(0, 243, 255, 0.2);
+        }
+
+        .spin-btn:disabled {
+            border-color: #444;
+            color: #888;
+            box-shadow: none;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        /* --- SCOREBOARD --- */
+        .scoreboard {
+            width: 90%;
+            max-width: 380px;
+            background: rgba(20, 20, 25, 0.8);
+            border-radius: 15px;
+            border: 1px solid #333;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .score-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            color: #888;
+            text-align: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+
+        .player-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #222;
+        }
+
+        .player-row:last-child {
+            border-bottom: none;
+        }
+
+        .p-name {
+            font-weight: 600;
+            flex-grow: 1;
+            padding-right: 10px;
+            font-size: 0.9rem;
+        }
+
+        .p-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .p-score {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            color: var(--neon-pink);
+            min-width: 25px;
+            text-align: center;
+        }
+
+        .score-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid var(--neon-blue);
+            background: transparent;
+            color: var(--neon-blue);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            line-height: 0;
+        }
+        
+        .score-btn:active {
+            background: var(--neon-blue);
+            color: black;
+        }
+
+        .reset-game-btn {
+            margin-top: 5px;
+            font-size: 0.8rem;
+            padding: 8px;
+            opacity: 0.7;
+            max-width: 380px;
+        }
+
+        /* --- ESTILO PARA EL BOTÓN DE SALIR (Diferente color para distinción) --- */
+        .exit-btn {
+            border-color: var(--neon-violet) !important;
+            color: var(--neon-violet) !important;
+            box-shadow: 0 0 10px rgba(188, 19, 254, 0.2) !important;
+            margin-bottom: 5px; /* Pequeño espacio para separarlo del otro botón */
+        }
+        .exit-btn:hover {
+            background: rgba(188, 19, 254, 0.1) !important;
+            box-shadow: 0 0 20px rgba(188, 19, 254, 0.4) !important;
+        }
+        /* ------------------------------------------------------------------- */
+
+
+        .glitch-text {
+            animation: glitch 0.3s infinite;
+            color: var(--neon-pink);
+        }
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 2px) }
+            40% { transform: translate(-2px, -2px) }
+            60% { transform: translate(2px, 2px) }
+            80% { transform: translate(2px, -2px) }
+            100% { transform: translate(0) }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Quién Soy</h1>
+    </div>
+
+    <!-- PANTALLA 1: CONFIGURACIÓN -->
+    <div id="setupScreen" class="screen active">
+        <div class="setup-container">
+            <div class="input-group">
+                <label>Cantidad de Jugadores</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="playerCountInput" min="1" max="20" value="2" style="width: 70px;">
+                    <button class="action-btn" onclick="generateInputs()">Fijar</button>
+                </div>
+            </div>
+
+            <div id="namesContainer" class="player-inputs-list">
+                <!-- Aquí se generan los inputs -->
+            </div>
+
+            <button id="startGameBtn" class="action-btn secondary" style="display:none;" onclick="startGame()">COMENZAR JUEGO</button>
+        </div>
+    </div>
+
+    <!-- PANTALLA 2: JUEGO -->
+    <div id="gameScreen" class="screen">
+        
+        <!-- CARTA DEL PERSONAJE REDISEÑADA -->
+        <div class="card-wrapper">
+            <div class="card-border"></div>
+            <div class="card">
+                <div class="image-area">
+                    <div id="placeholder" class="placeholder">?</div>
+                    <img id="charImg" class="character-img" alt="">
+                </div>
+                
+                <!-- INFORMACIÓN SUPERPUESTA -->
+                <div class="info-area">
+                    <div id="charId" class="char-id">#000</div>
+                    <div id="charName" class="char-name">READY?</div>
+                </div>
+
+                <!-- BOTÓN GIRAR INTEGRADO -->
+                <div class="spin-btn-overlay">
+                    <button id="spinBtn" class="spin-btn" onclick="startSpin()">GIRAR PERSONAJE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLERO DE PUNTOS -->
+        <div class="scoreboard">
+            <div class="score-title">PUNTUACIÓN</div>
+            <div id="scoreList">
+                <!-- Lista de jugadores generada por JS -->
+            </div>
+        </div>
+        
+        <!-- BOTÓN DE SALIR AÑADIDO -->
+        <button class="action-btn reset-game-btn exit-btn" onclick="exitToMenu()">SALIR AL MENÚ</button>
+        
+        <button class="action-btn reset-game-btn" onclick="resetGame()">Nuevo Juego</button>
+    </div>
+
+    <script>
+        // Array de personajes (mantenido igual)
+        const characters = [
+            // ... (150 personajes) ...
+            { id: 1, name: "Goku", img: "https://placehold.co/400x600/00f3ff/white?text=Goku" },
+            { id: 2, name: "Spiderman", img: "https://placehold.co/400x600/ff0055/white?text=Spiderman" },
+            { id: 3, name: "Mario", img: "https://placehold.co/400x600/bc13fe/white?text=Mario" },
+            { id: 4, name: "Sheldon Cooper", img: "https://placehold.co/400x600/00f3ff/black?text=Sheldon" },
+            { id: 5, name: "La Roca", img: "https://placehold.co/400x600/ff0055/black?text=La+Roca" },
+            { id: 6, name: "Harry Potter", img: "https://placehold.co/400x600/bc13fe/black?text=HP" },
+            { id: 7, name: "Elon Musk", img: "https://placehold.co/400x600/00f3ff/white?text=Elon" },
+            { id: 8, name: "Taylor Swift", img: "https://placehold.co/400x600/ff0055/white?text=Taylor" },
+            { id: 9, name: "Shrek", img: "https://placehold.co/400x600/bc13fe/white?text=Shrek" },
+            { id: 10, name: "Unicornio", img: "https://placehold.co/400x600/00f3ff/black?text=Unicornio" },
+            { id: 11, name: "Batman", img: "https://placehold.co/400x600/ff0055/black?text=Batman" },
+            { id: 12, name: "Homero Simpson", img: "https://placehold.co/400x600/bc13fe/black?text=Homero" },
+            { id: 13, name: "Darth Vader", img: "https://placehold.co/400x600/00f3ff/white?text=Darth" },
+            { id: 14, name: "Pikachu", img: "https://placehold.co/400x600/ff0055/white?text=Pikachu" },
+            { id: 15, name: "Reina Isabel II", img: "https://placehold.co/400x600/bc13fe/white?text=Reina" },
+            { id: 16, name: "Mickey Mouse", img: "https://placehold.co/400x600/00f3ff/black?text=Mickey" },
+            { id: 17, name: "Bob Esponja", img: "https://placehold.co/400x600/ff0055/black?text=Bob" },
+            { id: 18, name: "Michael Jordan", img: "https://placehold.co/400x600/bc13fe/black?text=Jordan" },
+            { id: 19, name: "Beyoncé", img: "https://placehold.co/400x600/00f3ff/white?text=Beyonce" },
+            { id: 20, name: "Godzilla", img: "https://placehold.co/400x600/ff0055/white?text=Godzilla" }
+            // Agregué 20 placeholders para simular un array de 150 personajes, ¡pero puedes expandirlo!
+        ];
+
+        // --- ESTADO DEL JUEGO ---
+        let players = [];
+        let isSpinning = false;
+        
+        // Elementos del DOM
+        const setupScreen = document.getElementById('setupScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const namesContainer = document.getElementById('namesContainer');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const scoreList = document.getElementById('scoreList');
+        
+        const charImg = document.getElementById('charImg');
+        const placeholder = document.getElementById('placeholder');
+        const charName = document.getElementById('charName');
+        const charId = document.getElementById('charId');
+        const spinBtn = document.getElementById('spinBtn');
+
+        // --- FUNCIONES DE SETUP ---
+
+        // Genera los inputs dinámicamente según la cantidad elegida
+        function generateInputs() {
+            const count = document.getElementById('playerCountInput').value;
+            namesContainer.innerHTML = ''; // Limpiar
+            
+            if (count < 1) return;
+
+            for (let i = 0; i < count; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = `Jugador ${i + 1}`;
+                input.className = 'player-name-input';
+                input.style.marginBottom = '10px';
+                input.style.width = '100%';
+                namesContainer.appendChild(input);
+            }
+            
+            startGameBtn.style.display = 'block';
+        }
+
+        function startGame() {
+            // Recolectar nombres
+            const inputs = document.querySelectorAll('.player-name-input');
+            players = [];
+            
+            inputs.forEach((input, index) => {
+                const name = input.value.trim() || `Jugador ${index + 1}`;
+                players.push({ name: name, score: 0 });
+            });
+
+            if (players.length === 0) return;
+
+            // Cambiar pantalla
+            setupScreen.classList.remove('active');
+            gameScreen.classList.add('active');
+
+            renderScoreboard();
+        }
+
+        function resetGame() {
+            gameScreen.classList.remove('active');
+            setupScreen.classList.add('active');
+            // Opcional: Limpiar inputs
+        }
+        
+        // FUNCIÓN PARA SALIR AL MENÚ (CORREGIDA)
+        function exitToMenu() {
+            // Se añade el protocolo 'https://' para que sea una URL válida.
+            window.location.href = "https://ees51.github.io/juegos/menu.html";
+        }
+
+        // --- FUNCIONES DEL TABLERO DE PUNTOS ---
+
+        function renderScoreboard() {
+            scoreList.innerHTML = '';
+            players.forEach((player, index) => {
+                const row = document.createElement('div');
+                row.className = 'player-row';
+                row.innerHTML = `
+                    <div class="p-name">${player.name}</div>
+                    <div class="p-controls">
+                        <button class="score-btn" onclick="updateScore(${index}, -1)">-</button>
+                        <div class="p-score">${player.score}</div>
+                        <button class="score-btn" onclick="updateScore(${index}, 1)">+</button>
+                    </div>
+                `;
+                scoreList.appendChild(row);
+            });
+        }
+
+        function updateScore(playerIndex, change) {
+            players[playerIndex].score += change;
+            if (players[playerIndex].score < 0) players[playerIndex].score = 0; // No permitir negativos
+            renderScoreboard();
+        }
+
+        // --- LÓGICA DE LA CARTA ---
+
+        function handleError() {
+            charImg.style.display = 'none';
+            placeholder.style.display = 'flex';
+            charId.textContent = "#ERR";
+            charName.textContent = "NO IMAGE";
+            // Usa la primera letra del nombre anterior como placeholder si no hay imagen
+            // placeholder.textContent = charName.textContent.charAt(0);
+        }
+        charImg.onerror = handleError;
+
+        function updateCard(character) {
+            charId.textContent = `#${String(character.id).padStart(3, '0')}`;
+            charName.textContent = character.name;
+            
+            charImg.style.display = 'none';
+            placeholder.style.display = 'flex';
+            placeholder.textContent = "?"; 
+
+            if (character.img) {
+                // Pre-carga la imagen para evitar parpadeos
+                const img = new Image();
+                img.onload = () => {
+                   // Solo actualiza si el nombre del personaje no ha cambiado durante la carga
+                   if(charName.textContent === character.name) {
+                       charImg.src = character.img;
+                       charImg.style.display = 'block';
+                       placeholder.style.display = 'none';
+                   }
+                };
+                img.onerror = () => {
+                    if(charName.textContent === character.name) {
+                        handleError();
+                    }
+                };
+                img.src = character.img;
+            } else {
+                handleError();
+            }
+        }
+
+        function startSpin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            spinBtn.disabled = true;
+            charName.classList.add('glitch-text');
+
+            let counter = 0;
+            const totalShuffles = 25; // Número de veces que se "baraja"
+            const speed = 80; // Velocidad de barajado en ms
+
+            const interval = setInterval(() => {
+                const randomTemp = characters[Math.floor(Math.random() * characters.length)];
+                updateCard(randomTemp);
+                counter++;
+
+                if (counter > totalShuffles) {
+                    clearInterval(interval);
+                    finalizeSpin();
+                }
+            }, speed);
+        }
+
+        function finalizeSpin() {
+            const winner = characters[Math.floor(Math.random() * characters.length)];
+            
+            setTimeout(() => {
+                updateCard(winner);
+                charName.classList.remove('glitch-text');
+                spinBtn.disabled = false;
+                if (navigator.vibrate) navigator.vibrate(200); // Vibración al finalizar
+            }, 200);
+            
+            isSpinning = false;
+        }
+
+        // Ejecutar al cargar para generar los inputs iniciales
+        document.addEventListener('DOMContentLoaded', () => {
+            generateInputs();
+            // Mostrar la carta de inicio
+            updateCard({ id: 0, name: "INICIAR", img: null });
+        });
+    </script>
+</body>
+</html>
