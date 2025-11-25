@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verdad o Reto COLEGIO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {font-family:'Inter',sans-serif;background:linear-gradient(135deg,#4F46E5,#A855F7);min-height:100vh;}
+        .card {background:#fff;box-shadow:0 15px 30px -5px rgba(0,0,0,.2);transition:.3s;}
+        .card:hover {transform:translateY(-4px);}
+        #truth-btn {background:#10B981;border-radius:1.5rem;padding:1rem 2rem;}
+        #truth-btn:hover {background:#059669;}
+        #dare-btn {background:#EF4444;border-radius:1.5rem;padding:1rem 2rem;}
+        #dare-btn:hover {background:#DC2626;}
+        #current-player-section {background:#DBEAFE;border:3px solid #3B82F6;border-radius:1.5rem;}
+        #current-player-display {color:#1E40AF;}
+        #next-player-btn {background:#3B82F6;border-radius:9999px;padding:0.75rem 1.5rem;}
+        #next-player-btn:hover {background:#2563EB;}
+        #action-box {background:#1F2937;border:4px dashed #3B82F6;border-radius:2rem;position:relative;overflow:hidden;}
+        #action-display {min-height:12rem;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:2rem;text-align:left;font-size:1.5rem;font-weight:800;line-height:1.6;color:#34D399;}
+        .action-title {font-size:2.5rem;font-weight:900;margin-bottom:0.5rem;}
+        .neon-truth {color:#34D399;text-shadow:0 0 7px #10B981,0 0 10px #10B981,0 0 21px #059669,0 0 42px #047857;}
+        .neon-dare {color:#F87171;text-shadow:0 0 7px #EF4444,0 0 10px #EF4444,0 0 21px #DC2626,0 0 42px #B91C1C;}
+        @keyframes fadeInScale {0%{opacity:0;transform:scale(.9)}100%{opacity:1;transform:scale(1)}}
+        .animate-in {animation:fadeInScale .5s ease-out;}
+        .player-tag {padding:0.5rem 1rem;border-radius:9999px;font-weight:600;margin:0.25rem;transition:all .3s;display:inline-flex;align-items:center;}
+        .tag-girl {background:#F9A8D4;color:#86198F;border:2px solid #D946EF;box-shadow:0 0 6px rgba(244,114,182,.7);}
+        .tag-girl:hover {background:#D946EF;color:#fff;transform:scale(1.05);}
+        .tag-boy {background:#22D3EE;color:#083344;border:2px solid #06B6D4;box-shadow:0 0 10px #67E8F9;}
+        .tag-boy:hover {background:#06B6D4;color:#fff;transform:scale(1.05);}
+        .current-player {background:#10B981!important;color:#fff!important;animation:pulse 1.5s infinite;}
+        @keyframes pulse {0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.7)}50%{box-shadow:0 0 0 10px rgba(16,185,129,0)}}
+        .radio-group {display:flex;gap:1rem;justify-content:center;margin:1rem 0;}
+        .radio-item {display:flex;align-items:center;gap:0.5rem;}
+        .player-name {font-weight:900;color:#1E40AF;}
+        .target-name {font-weight:900;color:#EA580C;}
+        #category {border-radius:1rem;padding:1rem;font-weight:bold;}
+        .select-wrapper {position:relative;}
+        .select-wrapper::after {
+            content:'▼';position:absolute;right:1rem;top:50%;transform:translateY(-50%);pointer-events:none;color:#6B7280;
+        }
+        .btn-emoji {font-size:1.5rem;margin-left:0.5rem;}
+    </style>
+</head>
+<body class="p-4 flex items-center justify-center">
+
+<div id="start-screen" class="w-full max-w-xl rounded-xl p-8 card">
+    <h1 class="text-5xl font-extrabold text-center mb-6">¡COLEGIO MODE!</h1>
+
+    <div class="mb-6">
+        <p class="text-xl font-bold mb-3 text-center">¿Con quién querés jugar?</p>
+        <div class="radio-group">
+            <label class="radio-item">
+                <input type="radio" name="global-gender-mode" value="both" checked>
+                <span class="font-medium">Ambos</span>
+            </label>
+            <label class="radio-item">
+                <input type="radio" name="global-gender-mode" value="girls">
+                <span class="font-medium">Solo chicas</span>
+            </label>
+            <label class="radio-item">
+                <input type="radio" name="global-gender-mode" value="boys">
+                <span class="font-medium">Solo chicos</span>
+            </label>
+        </div>
+    </div>
+
+    <div id="both-mode">
+        <label class="block text-xl font-bold mb-2">Chicas:</label>
+        <textarea id="girls-input" rows="2" class="w-full p-4 border-2 border-purple-500 rounded-lg mb-4" placeholder="Ana, Sofía, Lucía"></textarea>
+        <label class="block text-xl font-bold mb-2">Chicos:</label>
+        <textarea id="boys-input" rows="2" class="w-full p-4 border-2 border-purple-500 rounded-lg mb-6" placeholder="Juan, Pedro, Marcos"></textarea>
+    </div>
+
+    <div id="girls-mode" class="hidden">
+        <label class="block text-xl font-bold mb-2">Chicas:</label>
+        <textarea id="girls-only-input" rows="3" class="w-full p-4 border-2 border-pink-500 rounded-lg mb-6" placeholder="Ana, Sofía, Lucía, Camila"></textarea>
+    </div>
+
+    <div id="boys-mode" class="hidden">
+        <label class="block text-xl font-bold mb-2">Chicos:</label>
+        <textarea id="boys-only-input" rows="3" class="w-full p-4 border-2 border-blue-500 rounded-lg mb-6" placeholder="Juan, Pedro, Marcos, Lucas"></textarea>
+    </div>
+
+    <button onclick="startGame()" class="w-full py-4 rounded-xl text-2xl font-bold bg-purple-600 hover:bg-purple-700 text-white">¡EMPEZAR!</button>
+    <p id="error-message" class="text-red-500 text-center mt-4 hidden">Mínimo 2 jugadores</p>
+</div>
+
+<!-- PANTALLA DE PREFERENCIA -->
+<div id="preference-screen" class="w-full max-w-xl rounded-xl p-8 card hidden">
+    <h2 class="text-4xl font-extrabold text-center mb-6" id="preference-title">Preferencia de <span id="current-preference-player"></span></h2>
+    <p class="text-center mb-6">¿Con quién querés que te toque reto o verdad?</p>
+    <div class="radio-group">
+        <label class="radio-item">
+            <input type="radio" name="player-preference" value="both" checked>
+            <span class="font-medium">Ambos</span>
+        </label>
+        <label class="radio-item">
+            <input type="radio" name="player-preference" value="girls">
+            <span class="font-medium">Solo chicas</span>
+        </label>
+        <label class="radio-item">
+            <input type="radio" name="player-preference" value="boys">
+            <span class="font-medium">Solo chicos</span>
+        </label>
+    </div>
+    <button onclick="savePreferenceAndNext()" class="w-full py-4 mt-6 rounded-xl text-2xl font-bold bg-green-600 hover:bg-green-700 text-white">SIGUIENTE →</button>
+</div>
+
+<div id="game-screen" class="w-full max-w-3xl rounded-xl p-8 card hidden">
+    <h1 class="text-5xl font-extrabold text-center mb-6">Verdad o Reto</h1>
+
+    <div id="current-player-section" class="p-6 text-center mb-6">
+        <p class="text-lg font-bold text-blue-700">TURNO DE:</p>
+        <div id="current-player-display" class="text-4xl font-black my-4">—</div>
+        <button onclick="nextPlayer()" id="next-player-btn" class="text-white font-bold">Girar Ruleta</button>
+    </div>
+
+    <div class="text-center mb-6">
+        <p class="font-bold">Jugadores:</p>
+        <div id="player-list-tags" class="flex flex-wrap justify-center"></div>
+    </div>
+
+    <div class="bg-gray-100 p-4 rounded-xl mb-8">
+        <div class="select-wrapper">
+            <select id="category" class="w-full p-4 rounded-lg text-xl font-bold appearance-none bg-transparent">
+                <option value="friends">COLEGIO</option>
+                <option value="family">FAMILIA</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="action-box" class="p-8 rounded-3xl mb-8">
+        <div id="action-display" class="text-white">
+            <div class="action-title neon-truth">VERDAD (COLEGIO)</div>
+            <div>¡Gira la ruleta primero!</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <button id="truth-btn" onclick="askAction('truth')" class="text-2xl font-bold flex items-center justify-center">
+            VERDAD <span class="btn-emoji">😳</span>
+        </button>
+        <button id="dare-btn" onclick="askAction('dare')" class="text-2xl font-bold flex items-center justify-center">
+            RETO <span class="btn-emoji">😈</span>
+        </button>
+    </div>
+</div>
+
+<script>
+    let players = [], currentPlayerIndex = -1, isSpinning = false;
+    let currentPreferenceIndex = 0;
+
+    const gameData = {
+        friends: { truth: [], dare: [] },
+        family:  { truth: [], dare: [] }
+    };
+
+    // === VERDADES COLEGIO (TODAS CON [PLAYER] y [TARGET] DENTRO) ===
+    gameData.friends.truth = `[PLAYER], ¿alguna vez pensaste en besarme en clase?
+[PLAYER], ¿qué parte de [TARGET] cuerpo mirás más sin que me dé cuenta?
+[PLAYER], ¿te pusiste caliente alguna vez por un mensaje de [TARGET]?
+[PLAYER], ¿quién del curso te parece más sexy con uniforme?
+[PLAYER], ¿alguna vez te imaginaste desnudo/a en el baño del colegio?
+[PLAYER], ¿qué harías si  estuviéras solo/a en el aula después de clases con [TARGET]?
+[PLAYER], ¿te excita que [TARGET] te susurre al oído en público?
+[PLAYER], ¿alguna vez te masturbaste pensando en alguien del colegio?
+[PLAYER], ¿qué prenda de [TARGET] te pondrías si pudieras?
+[PLAYER], ¿te gusta que [TARGET] te toque el pelo en clase?
+[PLAYER], ¿alguna vez mandaste un audio subido de tono a alguien del curso?
+[PLAYER], ¿qué olor de [TARGET] te vuelve loco/a?
+[PLAYER], ¿te excita ver a [TARGET] morderse el labio en clase?
+[PLAYER], ¿alguna vez soñaste con [TARGET] en situación hot?
+[PLAYER], ¿qué parte de tu cuerpo te gusta que te besen?
+[PLAYER], ¿te pondrías celoso/a si vieras a [TARGET] coqueteando con otro/a?
+[PLAYER], ¿alguna vez te calentaste con una foto de alguien del colegio?
+[PLAYER], ¿qué palabra sexy te gustaría que [TARGET] te diga al oído?
+[PLAYER], ¿te excita el roce “accidental” en el pupitre con [TARGET]?
+[PLAYER], ¿alguna vez escribiste el nombre de [TARGET] en un lugar secreto?
+[PLAYER], ¿qué harías si [TARGET] te mandara una foto sugerente en recreo?
+[PLAYER], ¿te gusta que [TARGET] te mire fijo a los ojos en silencio?
+[PLAYER], ¿alguna vez te imaginaste besando a [TARGET] en el pasillo?
+[PLAYER], ¿qué prenda interior usás hoy? (color o tipo)
+[PLAYER], ¿te excita que [TARGET] te hable bajito cerca del cuello?
+[PLAYER], ¿alguna vez te calentaste con el roce de rodillas bajo el pupitre con [TARGET]?
+[PLAYER], ¿qué parte de [TARGET] te gustaría tocar disimuladamente?
+[PLAYER], ¿te gusta que [TARGET] te abrace por detrás “de sorpresa”?
+[PLAYER], ¿alguna vez pensaste en [TARGET] mientras te duchabas?
+[PLAYER], ¿qué harías si [TARGET] te susurrara “te deseo” en la fila del kiosco?
+[PLAYER], ¿te excita ver a [TARGET] lamerse los labios?
+[PLAYER], ¿alguna vez guardaste una nota de [TARGET] con doble sentido?
+[PLAYER], ¿qué zona tuya es la más sensible al roce?
+[PLAYER], ¿te gusta que [TARGET] te mire mientras escribís en el pizarrón?
+[PLAYER], ¿alguna vez te imaginaste con [TARGET] en el baño?
+[PLAYER], ¿qué mensaje hot le mandarías a [TARGET] si nadie viera?
+[PLAYER], ¿te excita el olor a perfume de [TARGET] después de educación física?
+[PLAYER], ¿alguna vez te pusiste nervioso/a por un roce “sin querer” con [TARGET]?
+[PLAYER], ¿qué harías si [TARGET] te dijera “te como a besos” en voz baja?
+[PLAYER], ¿te gusta que [TARGET] te toque la mano al pasar cuadernos?
+[PLAYER], ¿alguna vez soñaste con [TARGET] en ropa interior?
+[PLAYER], ¿qué parte del uniforme de [TARGET] te parece más sexy?
+[PLAYER], ¿te excita que [TARGET] te hable cerca de la oreja?
+[PLAYER], ¿alguna vez pensaste en [TARGET] durante un examen?
+[PLAYER], ¿qué harías si [TARGET] te mandara un audio gimiendo tu nombre?
+[PLAYER], ¿te gusta que [TARGET] te mire fijo mientras hablás?
+[PLAYER], ¿alguna vez te calentaste con una sonrisa de [TARGET]?
+[PLAYER], ¿qué prenda de [TARGET] te gustaría oler en secreto?
+[PLAYER], ¿te excita el roce de piernas al sentarte al lado de [TARGET]?
+[PLAYER], ¿alguna vez escribiste algo hot sobre [TARGET] en tu celular?
+[PLAYER], ¿qué harías si [TARGET] te rozara la espalda “accidentalmente”?
+[PLAYER], ¿te gusta que [TARGET] te susurre piropos en la biblioteca?
+[PLAYER], ¿alguna vez te imaginaste besando a [TARGET] en el micro?
+[PLAYER], ¿qué zona tuya te gusta que [TARGET] te acaricie disimuladamente?
+[PLAYER], ¿te excita ver a [TARGET] jugar con su pelo en clase?
+[PLAYER], ¿alguna vez guardaste una foto de [TARGET] con filtro hot?
+[PLAYER], ¿qué harías si [TARGET] te dijera “me ponés caliente” en recreo?
+[PLAYER], ¿te gusta que [TARGET] te toque el brazo al reírse?
+[PLAYER], ¿alguna vez pensaste en [TARGET] mientras escuchabas música?
+[PLAYER], ¿qué mensaje sugerente le escribirías a [TARGET] en una nota?
+[PLAYER], ¿te excita el roce de hombros en la foto grupal con [TARGET]?
+[PLAYER], ¿alguna vez soñaste con [TARGET] en el vestuario?
+[PLAYER], ¿qué parte de [TARGET] te gustaría besar en secreto?
+[PLAYER], ¿te gusta que [TARGET] te mire mientras comés algo?
+[PLAYER], ¿alguna vez te calentaste con la voz grabada de [TARGET]?
+[PLAYER], ¿qué harías si [TARGET] te mandara una foto de su cuello?
+[PLAYER], ¿te excita que [TARGET] te hable despacio y cerca?
+[PLAYER], ¿alguna vez pensaste en [TARGET] durante el himno?
+[PLAYER], ¿qué prenda tuya te gustaría que [TARGET] usara?
+[PLAYER], ¿te gusta que [TARGET] te roce al pasar en el pasillo?
+[PLAYER], ¿alguna vez imaginaste las manos de [TARGET] en tu cintura?
+[PLAYER], ¿qué audio hot le mandarías a [TARGET] desde el baño?
+[PLAYER], ¿te excita ver a [TARGET] morder un lápiz?
+[PLAYER], ¿alguna vez guardaste un mensaje de [TARGET] con doble sentido?
+[PLAYER], ¿qué harías si [TARGET] te susurrara “te quiero desnudo/a”?
+[PLAYER], ¿te gusta que [TARGET] te toque la nuca “quitando una pelusa”?
+[PLAYER], ¿alguna vez pensaste en [TARGET] en la sala de música?
+[PLAYER], ¿qué zona tuya te vuelve loco/a con un beso suave de [TARGET]?
+[PLAYER], ¿te excita el roce de dedos al compartir el celular con [TARGET]?
+[PLAYER], ¿alguna vez soñaste con [TARGET] en el patio?
+[PLAYER], ¿qué nota hot le pasarías a [TARGET] en clase?
+[PLAYER], ¿te gusta que [TARGET] te mire fijo al saludar?
+[PLAYER], ¿alguna vez te calentaste con la risa de [TARGET]?
+[PLAYER], ¿qué harías si [TARGET] te dijera “me mojo/pienso en vos”?
+[PLAYER], ¿te excita que [TARGET] te hable al oído en la fila?
+[PLAYER], ¿alguna vez imaginaste besarte con [TARGET] en el ascensor?
+[PLAYER], ¿qué parte de [TARGET] te gustaría oler después de clases?
+[PLAYER], ¿te gusta que [TARGET] te abrace “de amigos” pero apretado?
+[PLAYER], ¿alguna vez pensaste en [TARGET] mientras escribías?
+[PLAYER], ¿qué mensaje sugerente le mandarías a [TARGET] por WhatsApp?
+[PLAYER], ¿te excita el roce de rodillas en el banco con [TARGET]?
+[PLAYER], ¿alguna vez soñaste con [TARGET] en la biblioteca?
+[PLAYER], ¿qué harías si [TARGET] te rozara la mano “sin querer”?
+[PLAYER], ¿te gusta que [TARGET] te susurre al despedirse?
+[PLAYER], ¿alguna vez guardaste una foto de [TARGET] en secreto?
+[PLAYER], ¿qué audio caliente le mandarías a [TARGET] en recreo?
+[PLAYER], ¿te excita ver a [TARGET] lamerse el dedo?
+[PLAYER], ¿alguna vez pensaste en [TARGET] durante educación física?
+[PLAYER], ¿qué harías si [TARGET] te dijera “te deseo ahora”?
+[PLAYER], ¿qué reto de los 100 de nivel 1 harías con [TARGET] hoy mismo?`.trim().split('\n');
+
+    // === RETOS COLEGIO (CON [TARGET]) ===
+    gameData.friends.dare = `Mirarse fijo 20 segundos sin pestañear con [TARGET]; quien pierda recibe un guiño lento.
+Escribir “me gustás” en una hoja y pasarla doblada a [TARGET] en clase.
+Soplar suave en la nuca de [TARGET] al pasar por detrás.
+Roce de dedos “accidental” al entregar un lápiz a [TARGET].
+Susurrar un piropo a [TARGET] cuando el profe da la espalda.
+Intercambiar chicles mascados con [TARGET] (sin contacto boca a boca).
+Dibujar una carita sonriente en la mano de [TARGET] con lapicera.
+Mandar audio de 3 segundos respirando profundo a [TARGET] por WhatsApp.
+Rozar rodillas bajo el pupitre con [TARGET] 5 segundos.
+Mostrar rápido el celular con “pensando en vos” a [TARGET].
+Oler el perfume de [TARGET] “como si fuera una flor”.
+Jugar piedra-papel-tijera con [TARGET]: perdedor besa la mejilla.
+Pasar nota a [TARGET] que diga “tocame el brazo disimuladamente”.
+Mirar los labios de [TARGET] mientras habla en grupo.
+Intercambiar gorras/mochilas con [TARGET] por 3 minutos.
+Susurrar “me ponés nervioso/a” a [TARGET] en la fila del kiosco.
+Hacer un guiño con lengua tocando el diente a [TARGET].
+Rozar la espalda de [TARGET] al pasar en pasillo estrecho.
+Mandar foto de tu sonrisa mordiendo el labio a [TARGET].
+Decir “si no hubiera gente…” a [TARGET] y callarte sonriendo.
+Beso en la mejilla de [TARGET] que roza la comisura 1 segundo.
+Tocar el antebrazo de [TARGET] 5 segundos “mirando el reloj”.
+Escribir “sin ropa serías…” en hoja y mostrarla a [TARGET] riendo.
+Lamer el dedo después de tocar la goma de [TARGET].
+Verdad o reto rápido en el baño con [TARGET] (solo besos en mano).
+Abrazo “de amigos” a [TARGET] que dura 4 segundos de más.
+Audio jadeando bajito con “esto me hacés” a [TARGET].
+Rozar codo con codo con [TARGET] en la biblioteca.
+Intercambiar pulseras/reloj con [TARGET] por el resto del día.
+Escribir en el vidrio empañado “beso pendiente” frente a [TARGET].
+Peinar el cabello de [TARGET] con los dedos 10 segundos.
+Beso en la frente a [TARGET] “por buena suerte en el examen”.
+Foto de escote/cuello desde el baño (solo sugerente) a [TARGET].
+Mirarse fijo y contar hasta 10 sin hablar con [TARGET].
+Susurrar “te comería a besos” a [TARGET] al saludar.
+Rozar hombros con [TARGET] en la foto grupal.
+Escribir en el pupitre “toco madera… contigo” al lado de [TARGET].
+Beso en la mano de [TARGET] como “caballero medieval”.
+Audio susurrando “me imaginás sin ropa?” a [TARGET].
+Tocar la cintura de [TARGET] 3 segundos al ayudar con la mochila.
+Beso volado que “casi” llega a la mejilla de [TARGET].
+Rozar muslo con muslo con [TARGET] al sentarse en banco corrido.
+Nota a [TARGET] que diga “te debo un abrazo apretado”.
+Lamer el lápiz mirándolo a los ojos de [TARGET].
+Jugar a “quién aguanta más sin sonreír” tocando manos con [TARGET].
+Abrazo lateral a [TARGET] en la fila de la bandera.
+Audio diciendo “tu voz me calienta” a [TARGET].
+Rozar dedos con [TARGET] al compartir el celular.
+Intercambiar auriculares y escuchar la misma canción con [TARGET].
+Escribir “caliente” en la calculadora y mostrarla a [TARGET].
+Tocar el lóbulo de la oreja de [TARGET] “quitando una pelusa”.
+Beso en la sien a [TARGET] “por el cumpleaños atrasado”.
+Foto de pies rozándose bajo el pupitre con [TARGET].
+Mirarse y morderse el labio al mismo tiempo con [TARGET].
+Susurrar “me encanta tu olor” a [TARGET] al despedirse.
+Rozar espaldas con [TARGET] al sentarse en el micro.
+Escribir “beso robado” en la palma de [TARGET] y cerrarla.
+Beso en el dorso de la mano de [TARGET] con lengua apenas.
+Audio gimiendo el nombre de [TARGET] bajito.
+Tocar rodilla de [TARGET] 2 segundos al cruzar piernas.
+Beso en la mejilla de [TARGET] que deja marca de gloss.
+Rozar cabello de [TARGET] al “arreglar un mechón”.
+Nota a [TARGET] “te miro y me derrito”.
+Lamer el borde del vaso mirándolo fijo a [TARGET].
+Jugar a “adivina el sabor” de un caramelo en la boca con [TARGET].
+Abrazo por detrás “sorpresa” a [TARGET] de 3 segundos.
+Audio respirando cerca del micrófono a [TARGET].
+Rozar dedos con [TARGET] al pasar el corrector.
+Intercambiar llaveros “hasta mañana” con [TARGET].
+Escribir “calor” en el brazo de [TARGET] con dedo.
+Tocar nuca de [TARGET] “quitando etiqueta de ropa”.
+Beso en la muñeca de [TARGET] “como príncipe”.
+Foto de labios húmedos (sin mostrar dientes) a [TARGET].
+Mirarse y dibujar corazón en el aire con [TARGET].
+Susurrar “quiero oler tu cuello otra vez” a [TARGET].
+Rozar piernas con [TARGET] al sentarse en el piso.
+Escribir “tuyo/a” en la goma y dársela a [TARGET].
+Beso en el aire que “aterriza” en la mejilla de [TARGET].
+Audio susurrando “me mojás/pone duro” a [TARGET].
+Tocar codo de [TARGET] al reírse de un chiste.
+Beso en la punta de la nariz a [TARGET] “por lindo/a”.
+Rozar manos con [TARGET] al compartir el mate (si usan).
+Nota a [TARGET] “te robo un beso mental”.
+Lamer el dedo después de escribir con tinta frente a [TARGET].
+Jugar a “quién parpadea primero” tocando mejillas con [TARGET].
+Abrazo “de oso” que aprieta 5 segundos a [TARGET].
+Audio diciendo “tus ojos me desnudan” a [TARGET].
+Rozar dedos con [TARGET] al pasar el cuaderno.
+Intercambiar pañuelos “hasta el lunes” con [TARGET].
+Escribir “fuego” en la mesa con agua frente a [TARGET].
+Tocar hombro de [TARGET] “sacudiendo una mota”.
+Beso en la palma de [TARGET] “guardado para después”.
+Foto de cuello con mordisco de lapicera a [TARGET].
+Mirarse y soplar beso al mismo tiempo con [TARGET].
+Susurrar “me encanta cuando te sonrojás” a [TARGET].
+Rozar espinilla de [TARGET] al “limpiar una miguita”.
+Escribir “caliente” en el celular y mostrarlo a [TARGET].
+Beso en el aire que “roza” la oreja de [TARGET].
+Audio gimiendo “uy, casi” a [TARGET].
+Reto final: mirarse 30 segundos con [TARGET], sonreír y decir “esto recién empieza”.`.trim().split('\n');
+
+    // === FAMILIA ===
+    gameData.family.truth = `¿Qué travesura de niño nunca confesaste, [PLAYER_NAME]?
+¿Quién es el familiar más gracioso? ¿Por qué?
+¿Qué comida familiar odias en secreto?
+¿Cuál es tu recuerdo favorito con abuelos?
+¿Qué primo/a te cae mejor? ¿Por qué?
+¿Has roto algo caro y lo escondiste? ¡Confiesa!
+¿Quién te da los mejores regalos?
+¿Qué tradición familiar cambiarías?
+¿Quién es el más dormilón de la familia?
+¿Qué apodo familiar odias?
+¿Has copiado en un examen familiar?
+¿Quién cocina mejor? ¡Nombres!
+¿Qué familiar te ha salvado de un lío?
+¿Cuál es tu foto familiar más vergonzosa?
+¿Quién es el rey/reina del karaoke?
+¿Has mentido sobre tu edad en familia?
+¿Qué familiar admiras en secreto?
+¿Quién es el más tacaño?
+¿Qué viaje familiar fue el mejor?
+¿Has robado dulces de la despensa?
+¿Quién te enseñó a andar en bici?
+¿Qué primo/a te hacía bullying de pequeño?
+¿Quién es el más deportista?
+¿Has fingido estar enfermo para no ir a un evento?
+¿Qué familiar te hace reír con solo mirarlo?
+¿Quién tiene el coche más loco?
+¿Qué tradición navideña es tu favorita?
+¿Has perdido algo importante de un familiar?
+¿Quién es el más fiestero?
+¿Qué familiar te da los mejores consejos amorosos?
+¿Has roto un récord familiar (carrera, juego…)?
+¿Quién es el más organizado?
+¿Qué familiar huele mejor?
+¿Has imitado a un familiar a sus espaldas?
+¿Quién es el más tecnológico?
+¿Qué familiar te ha prestado más dinero?
+¿Has ganado alguna apuesta familiar?
+¿Quién es el más madrugador?
+¿Qué familiar baila peor?
+¿Has escondido un novio/a de la familia?
+¿Quién es el más generoso?
+¿Qué familiar te ha llevado al médico más veces?
+¿Has hecho una broma pesada a un primo?
+¿Quién es el más cinéfilo?
+¿Qué familiar tiene la risa más contagiosa?
+¿Has ganado un juego de mesa familiar haciendo trampas?
+¿Quién es el más viajero?
+¿Qué familiar te ha enseñado un hobby?
+¿Has perdido el móvil en una reunión familiar?
+¿Quién es el más fashion?
+¿Qué familiar te ha defendido en una pelea?
+¿Has cantado en una boda familiar?
+¿Quién es el más ecológico?
+¿Qué familiar te ha regalado calcetines 3 Navidades seguidas?
+¿Has hecho un castillo de arena épico con primos?
+¿Quién es el más fan de un equipo?
+¿Qué familiar te ha pillado en una mentira?
+¿Has ganado un concurso familiar?
+¿Quién es el más dormilón en viajes?
+¿Qué familiar hace los mejores postres?
+¿Has hecho una fogata familiar épica?
+¿Quién es el más bromista?
+¿Qué familiar te ha enseñado a cocinar?
+¿Has roto un juguete de un primo y lo culpado?
+¿Quién es el más lector?
+¿Qué familiar te ha llevado a tu primer concierto?
+¿Has ganado un juego de cartas familiar?
+¿Quién es el más fotogénico?
+¿Qué familiar te ha prestado ropa?
+¿Has hecho una guerra de agua legendaria?
+¿Quién es el más melómano?
+¿Qué familiar te ha ayudado con los deberes?
+¿Has perdido una apuesta y pagado cena?
+¿Quién es el más cinéfilo de terror?
+¿Qué familiar te ha enseñado a nadar?
+¿Has hecho un disfraz familiar casero?
+¿Quién es el más deportista extremo?
+¿Qué familiar te ha regalado el mejor libro?
+¿Has ganado un torneo de videojuegos familiar?
+¿Quién es el más fan de Disney?
+¿Qué familiar te ha llevado a un parque de atracciones?
+¿Has hecho una acampada familiar?
+¿Quién es el más cocinillas sano?
+¿Qué familiar te ha enseñado a conducir?
+¿Has ganado un trivial familiar?
+¿Quién es el más fan de los animales?
+¿Qué familiar te ha regalado tu mascota?
+¿Has hecho un pícnic familiar épico?
+¿Quién es el más fan de los musicales?
+¿Qué familiar te ha ayudado a mudarte?
+¿Has ganado un concurso de baile familiar?
+¿Quién es el más fan de los podcasts?
+¿Qué familiar te ha enseñado un idioma?
+¿Has hecho una barbacoa legendaria?
+¿Quién es el más fan de los memes?
+¿Qué familiar te ha llevado a un museo?
+¿Has ganado un karaoke familiar?
+¿Quién es el más fan de los videojuegos retro?
+¿Qué familiar te ha enseñado a ahorrar?
+¿Cuál es la anécdota familiar que más repites?`.trim().split('\n');
+
+    gameData.family.dare = `Abrazo de oso a todos 10 seg
+Canta el himno familiar inventado
+Imita a tu abuela cocinando 20 seg
+Haz 10 sentadillas con un primo encima
+Cuenta un chiste de papá al grupo
+Baila la macarena con tu tío imaginario
+Llama a un familiar y di “te quiero” cantando
+Haz una torre de 5 personas (o cojines)
+Imita el ronquido de tu padre
+Envía un meme familiar al chat
+Haz 20 saltos de estrella
+Cuenta una historia familiar exagerada 30 seg
+Baila zumba con tu primo/a 20 seg
+Haz un sandwich humano con 3 personas
+Imita a tu madre regañando
+Envía una foto tuya haciendo morritos al grupo
+Haz 10 flexiones con aplausos
+Canta “Cumpleaños feliz” a un primo
+Imita a tu abuelo contando un chiste
+Haz un castillo de cartas (o móviles)
+Baila el flossing 15 seg
+Llama a tu tía y dile un cumplido exagerado
+Haz 15 abdominales cantando
+Imita a tu primo pequeño llorando
+Envía un audio imitando a tu madre al grupo
+Haz un pino (o intento) 10 seg
+Cuenta los primos que tienes en voz alta
+Baila vals con una escoba 20 seg
+Imita a tu tío bailando salsa
+Haz 10 burpees gritando “¡Familia!”
+Envía un sticker de amor a un familiar
+Canta una canción infantil a todo pulmón
+Imita a tu perro ladrando
+Haz una pirámide humana de 3
+Baila el robot 20 seg
+Llama a tu padre y hazle reír en 10 seg
+Haz 20 saltos de tijera
+Imita a tu abuela regañando por la tele
+Envía un audio de gallina al grupo
+Haz un baile de los 80s 30 seg
+Imita a tu primo contando un chiste
+Haz 15 sentadillas con aplausos
+Canta el abecedario al revés
+Baila con una silla como pareja 20 seg
+Envía un selfie con lengua al chat
+Imita a tu tía chismeando
+Haz 10 planchas cantando
+Llama a un familiar y di “eres el mejor”
+Haz un rap familiar improvisado
+Baila breakdance (o intento) 15 seg
+Imita a tu madre cocinando paella
+Haz 20 saltos con una pierna sola
+Envía un audio de león al grupo
+Canta “Las mañanitas” a todo volumen
+Imita a tu abuelo leyendo el periódico
+Haz un castillo de cojines épico
+Baila con un sombrero invisible 20 seg
+Llama a tu primo y hazle un cumplido
+Haz 15 flexiones con palmadas
+Imita a tu tía bailando flamenco
+Envía un vídeo bailando al grupo
+Haz un pino puente 10 seg
+Canta una ópera familiar inventada
+Baila el moonwalk 15 seg
+Imita a tu perro pidiendo comida
+Haz 10 burpees con gritos
+Envía un audio de vaca al grupo
+Canta el himno de tu equipo favorito
+Imita a tu madre regañando por WhatsApp
+Haz 20 abdominales cantando una nana
+Baila con una escoba como pareja de baile
+Llama a tu abuela y dile que la quieres
+Haz un rap de los nombres familiares
+Imita a tu tío contando anécdotas
+Envía un sticker de beso al chat
+Haz 15 sentadillas con saltos
+Canta “La cucaracha” con mariachi
+Baila el twist 20 seg
+Imita a tu primo haciendo muecas
+Haz 10 planchas con palmadas
+Envía un audio de loro al grupo
+Canta “Feliz Navidad” en julio
+Imita a tu tía maquillándose
+Haz un castillo de arena imaginario
+Baila con un cojín como pareja 20 seg
+Llama a un familiar y hazle reír
+Haz 20 saltos de estrella
+Imita a tu abuelo durmiendo la siesta
+Envía un vídeo de baile loco al grupo
+Haz un pino intento épico
+Canta una canción infantil en inglés
+Baila el hula-hoop imaginario 15 seg
+Imita a tu madre llamando a comer
+Haz 15 burpees cantando
+Envía un audio de elefante al grupo
+Canta “Cumpleaños feliz” a ti mismo
+Imita a tu primo contando chistes malos
+Haz 10 flexiones con una mano
+Baila con una escoba como guitarra
+Llama a tu tía y dile un piropo`.trim().split('\n');
+
+    const actionDisplay = document.getElementById('action-display');
+    const categorySelect = document.getElementById('category');
+    const currentPlayerDisplay = document.getElementById('current-player-display');
+    const playerListTags = document.getElementById('player-list-tags');
+    const nextPlayerBtn = document.getElementById('next-player-btn');
+    const errorMessage = document.getElementById('error-message');
+    const startScreen = document.getElementById('start-screen');
+    const preferenceScreen = document.getElementById('preference-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const currentPreferencePlayer = document.getElementById('current-preference-player');
+
+    let usedTruths = {friends:[], family:[]};
+    let usedDares = {friends:[], family:[]};
+
+    // === MODO GLOBAL ===
+    document.querySelectorAll('input[name="global-gender-mode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('both-mode').classList.add('hidden');
+            document.getElementById('girls-mode').classList.add('hidden');
+            document.getElementById('boys-mode').classList.add('hidden');
+            document.getElementById(`${this.value}-mode`).classList.remove('hidden');
+        });
+    });
+
+    function startGame(){
+        const mode = document.querySelector('input[name="global-gender-mode"]:checked').value;
+        let girls = [], boys = [];
+
+        if(mode === 'both'){
+            girls = document.getElementById('girls-input').value.split(',').map(n=>n.trim()).filter(n=>n).map(n=>({name:n,gender:'girl', preference:'both'}));
+            boys = document.getElementById('boys-input').value.split(',').map(n=>n.trim()).filter(n=>n).map(n=>({name:n,gender:'boy', preference:'both'}));
+        } else if(mode === 'girls'){
+            girls = document.getElementById('girls-only-input').value.split(',').map(n=>n.trim()).filter(n=>n).map(n=>({name:n,gender:'girl', preference:'girls'}));
+        } else if(mode === 'boys'){
+            boys = document.getElementById('boys-only-input').value.split(',').map(n=>n.trim()).filter(n=>n).map(n=>({name:n,gender:'boy', preference:'boys'}));
+        }
+
+        players = [...girls, ...boys];
+        if(players.length < 2){
+            errorMessage.classList.remove('hidden');
+            return;
+        }
+        errorMessage.classList.add('hidden');
+        startScreen.classList.add('hidden');
+
+        if(mode === 'both'){
+            currentPreferenceIndex = 0;
+            showPreferenceScreen();
+        } else {
+            startGameplay();
+        }
+    }
+
+    function showPreferenceScreen(){
+        if(currentPreferenceIndex >= players.length){
+            startGameplay();
+            return;
+        }
+        const player = players[currentPreferenceIndex];
+        currentPreferencePlayer.textContent = player.name;
+        preferenceScreen.classList.remove('hidden');
+    }
+
+    function savePreferenceAndNext(){
+        const selected = document.querySelector('input[name="player-preference"]:checked').value;
+        players[currentPreferenceIndex].preference = selected;
+        currentPreferenceIndex++;
+        preferenceScreen.classList.add('hidden');
+        showPreferenceScreen();
+    }
+
+    function startGameplay(){
+        renderPlayers();
+        gameScreen.classList.remove('hidden');
+        nextPlayer();
+    }
+
+    function renderPlayers(){
+        playerListTags.innerHTML = players.map((p,i)=>`<span class="player-tag ${p.gender==='girl'?'tag-girl':'tag-boy'}" data-index="${i}">${p.name}</span>`).join('');
+    }
+
+    function nextPlayer(){
+        if(isSpinning) return;
+        isSpinning=true; nextPlayerBtn.disabled=true; nextPlayerBtn.textContent='Girando...';
+        let spins=0;
+        const int=setInterval(()=>{
+            currentPlayerDisplay.textContent=players[Math.floor(Math.random()*players.length)].name;
+            spins++;
+            if(spins>20){clearInterval(int);revealPlayer();}
+        },70);
+    }
+
+    function revealPlayer(){
+        currentPlayerIndex=Math.floor(Math.random()*players.length);
+        const p=players[currentPlayerIndex];
+        currentPlayerDisplay.textContent=p.name;
+        document.querySelectorAll('.player-tag').forEach((t,i)=>{
+            t.classList.remove('current-player');
+            if(i===currentPlayerIndex) t.classList.add('current-player');
+        });
+        actionDisplay.innerHTML=`<div class="action-title neon-truth">¡Turno de <span class="player-name">${p.name}</span>!</div><div>Elige Verdad o Reto.</div>`;
+        actionDisplay.classList.remove('animate-in','neon-truth','neon-dare');
+        isSpinning=false; nextPlayerBtn.disabled=false; nextPlayerBtn.textContent='Girar Ruleta';
+    }
+
+    function selectTargetPlayer(){
+        if(players.length<=1) return {name:"alguien", gender:"unknown"};
+
+        const currentPref = players[currentPlayerIndex].preference;
+        let candidates = [];
+
+        if(currentPref === 'both'){
+            candidates = players.filter((_,i)=>i!==currentPlayerIndex);
+        } else {
+            candidates = players.filter(p => p.gender === currentPref && p.name !== players[currentPlayerIndex].name);
+        }
+
+        if(candidates.length === 0){
+            candidates = players.filter((_,i)=>i!==currentPlayerIndex);
+        }
+
+        const target = candidates[Math.floor(Math.random()*candidates.length)];
+        return target;
+    }
+
+    function askAction(type){
+        actionDisplay.classList.remove('animate-in','neon-truth','neon-dare');
+        if(currentPlayerIndex===-1){
+            actionDisplay.innerHTML='<div class="action-title neon-truth">¡Gira la ruleta primero!</div>';
+            return;
+        }
+        const cat=categorySelect.value;
+
+        if(cat !== 'friends'){
+            const data=gameData[cat][type];
+            let used=type==='truth'?usedTruths[cat]:usedDares[cat];
+            if(used.length===data.length){used.length=0;}
+            const avail=data.filter((_,i)=>!used.includes(i));
+            const pick=avail[Math.floor(Math.random()*avail.length)];
+            const idx=data.indexOf(pick);
+            used.push(idx);
+            let txt = pick.replace(/\[PLAYER_NAME\]/g, `<span class="player-name">${players[currentPlayerIndex].name}</span>`);
+            const neon=type==='truth'?'neon-truth':'neon-dare';
+            const title=type==='truth'?'VERDAD':'RETO';
+            actionDisplay.innerHTML = `<div class="action-title ${neon}">${title} (FAMILIA)</div><div>${txt}</div>`;
+            actionDisplay.classList.add('animate-in',neon);
+            return;
+        }
+
+        const data=gameData[cat][type];
+        let used=type==='truth'?usedTruths[cat]:usedDares[cat];
+        if(used.length===data.length){
+            used.length=0;
+            actionDisplay.innerHTML=`<div class="action-title ${type==='truth'?'neon-truth':'neon-dare'}">¡Todas las <b>${type==='truth'?'verdades':'retos'}</b> usadas!</div><div>Reiniciando…</div>`;
+            actionDisplay.classList.add('animate-in',type==='truth'?'neon-truth':'neon-dare');
+            setTimeout(()=>askAction(type),2000);
+            return;
+        }
+
+        let attempts = 0;
+        let pick, idx, target, txt;
+        do {
+            const avail=data.filter((_,i)=>!used.includes(i));
+            if(avail.length===0) break;
+            pick=avail[Math.floor(Math.random()*avail.length)];
+            idx=data.indexOf(pick);
+            target = selectTargetPlayer();
+            txt = pick
+                .replace(/\[PLAYER\]/g, `<span class="player-name">${players[currentPlayerIndex].name}</span>`)
+                .replace(/\[TARGET\]/g, `<span class="target-name">${target.name}</span>`);
+            attempts++;
+        } while (attempts < 50 && !isValidTargetForAction(type, target.gender));
+
+        if(attempts >= 50){
+            target = selectTargetPlayer();
+            txt = pick
+                .replace(/\[PLAYER\]/g, `<span class="player-name">${players[currentPlayerIndex].name}</span>`)
+                .replace(/\[TARGET\]/g, `<span class="target-name">${target.name}</span>`);
+        }
+
+        used.push(idx);
+        const neon=type==='truth'?'neon-truth':'neon-dare';
+        const title=type==='truth'?'VERDAD':'RETO';
+        actionDisplay.innerHTML = `<div class="action-title ${neon}">${title} (COLEGIO)</div><div>${txt}</div>`;
+        actionDisplay.classList.add('animate-in',neon);
+    }
+
+    function isValidTargetForAction(type, targetGender){
+        const currentPref = players[currentPlayerIndex].preference;
+        if(currentPref === 'both') return true;
+        return targetGender === currentPref;
+    }
+
+    document.head.insertAdjacentHTML('beforeend','<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">');
+</script>
+</body>
+</html>
