@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Diario de una Pasión - Quiz Romántico</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Great Vibes, Inter, and Playfair Display -->
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        vintage: {
+                            50: '#fcfbfa',
+                            100: '#f5f2ed',
+                            200: '#e8e2d5',
+                            300: '#d4c5b1',
+                            400: '#b89f82',
+                            500: '#9c7e5b',
+                            600: '#826544',
+                            700: '#685036',
+                            800: '#54412c',
+                            900: '#443525',
+                            950: '#251d14',
+                        },
+                        sepia: {
+                            bg: '#fbf7f0',
+                            card: '#fffdf9',
+                            border: '#e4d5b7',
+                            accent: '#c59b6c',
+                            dark: '#3a2e2b',
+                            rose: '#d9777f',
+                            gold: '#d4af37'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        script: ['"Great Vibes"', 'cursive'],
+                        sans: ['"Inter"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .parchment-bg {
+            background-color: #fbf7f0;
+            background-image: radial-gradient(#e6d5bc 0.75px, transparent 0.75px), radial-gradient(#e6d5bc 0.75px, #fbf7f0 0.75px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+        }
+        .vintage-shadow {
+            box-shadow: 0 10px 30px -5px rgba(104, 80, 54, 0.15), 0 4px 6px -2px rgba(104, 80, 54, 0.05);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="parchment-bg text-sepia-dark font-sans min-h-full flex flex-col justify-between selection:bg-sepia-rose selection:text-white">
+
+    <header class="w-full py-6 px-4 border-b border-vintage-200 bg-sepia-card/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-vintage-100 border border-vintage-300 flex items-center justify-center text-sepia-accent shadow-inner">
+                    <i class="fa-solid fa-feather-pointed text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-serif text-xl sm:text-2xl font-bold tracking-wide text-sepia-dark">El Diario de una Pasión</h1>
+                    <p class="text-xs text-vintage-600 font-serif italic">"Si tú eres un pájaro, yo soy un pájaro"</p>
+                </div>
+            </div>
+            <div id="quiz-header-status" class="hidden items-center gap-3 bg-vintage-100/80 px-4 py-1.5 rounded-full border border-vintage-200 text-xs sm:text-sm font-medium text-vintage-800">
+                <span>Pregunta <span id="current-q-num">1</span> de <span id="total-q-num">20</span></span>
+                <span class="text-vintage-400">•</span>
+                <span>Puntuación: <span id="current-score" class="font-bold text-sepia-accent">0</span></span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center p-4 sm:p-6 md:p-8">
+        <div class="w-full max-w-2xl mx-auto">
+
+            <!-- Welcome Screen -->
+            <div id="welcome-screen" class="bg-sepia-card rounded-2xl vintage-shadow p-6 sm:p-10 border border-sepia-border text-center relative overflow-hidden animate-fade-in">
+                <div class="absolute top-4 right-4 w-16 h-20 border-2 border-vintage-300 rounded opacity-40 rotate-6 flex flex-col items-center justify-center p-1 bg-vintage-50 pointer-events-none hidden sm:flex">
+                    <i class="fa-solid fa-heart text-sepia-rose text-xl mb-1"></i>
+                    <span class="text-[9px] font-bold tracking-tighter uppercase text-vintage-700">Seabrook</span>
+                    <span class="text-[8px] text-vintage-500">1940</span>
+                </div>
+
+                <div class="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-tr from-vintage-200 to-vintage-100 flex items-center justify-center text-sepia-accent shadow-md">
+                    <i class="fa-solid fa-book-open-reader text-2xl"></i>
+                </div>
+
+                <span class="text-xs uppercase tracking-widest text-vintage-600 font-semibold mb-2 block">Test de Conocimiento Cinematográfico</span>
+                <h2 class="font-serif text-3xl sm:text-4xl font-bold text-sepia-dark mb-4">¿Cuánto sabes de esta gran historia de amor?</h2>
+                <p class="text-vintage-700 max-w-lg mx-auto mb-8 text-sm sm:text-base leading-relaxed font-sans">
+                    Pon a prueba tu memoria sobre Noah, Allie, las cartas de amor enviadas durante 7 años y los momentos inolvidables de Seabrook. 20 preguntas desafiantes te esperan.
+                </p>
+
+                <div class="grid grid-cols-2 gap-4 max-w-xs mx-auto mb-8 text-left text-xs sm:text-sm text-vintage-800 bg-vintage-50 p-4 rounded-xl border border-vintage-200">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-question text-sepia-accent"></i>
+                        <span><strong>20</strong> Preguntas</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-trophy text-sepia-gold"></i>
+                        <span>Puntaje final</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-sepia-rose"></i>
+                        <span>Sin límite de tiempo</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-heart text-sepia-rose"></i>
+                        <span>100% Romántico</span>
+                    </div>
+                </div>
+
+                <button onclick="startQuiz()" class="group relative inline-flex items-center justify-center px-8 py-3.5 text-base font-medium text-white bg-vintage-700 rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:bg-vintage-800 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+                    <span class="absolute inset-0 w-full h-full bg-gradient-to-r from-vintage-600 to-vintage-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                    <span class="relative flex items-center gap-2 font-serif text-lg">
+                        <span>Comenzar el Viaje</span>
+                        <i class="fa-solid fa-arrow-right text-sm transition-transform duration-300 group-hover:translate-x-1"></i>
+                    </span>
+                </button>
+            </div>
+
+            <!-- Quiz Screen -->
+            <div id="quiz-screen" class="hidden bg-sepia-card rounded-2xl vintage-shadow p-6 sm:p-8 border border-sepia-border relative overflow-hidden animate-fade-in">
+                <div class="w-full bg-vintage-200 h-2 rounded-full mb-6 overflow-hidden">
+                    <div id="progress-bar" class="bg-gradient-to-r from-vintage-500 to-sepia-rose h-full transition-all duration-500 w-[5%]"></div>
+                </div>
+
+                <div class="flex items-center justify-between mb-3">
+                    <span id="question-category" class="text-xs uppercase tracking-wider font-semibold text-vintage-600 bg-vintage-100 px-3 py-1 rounded-full border border-vintage-200"></span>
+                    <span class="font-serif italic text-xs text-vintage-500">El Diario de una Pasión</span>
+                </div>
+
+                <h3 id="question-text" class="font-serif text-xl sm:text-2xl font-bold text-sepia-dark mb-6 leading-snug"></h3>
+
+                <div id="options-container" class="space-y-3 mb-6"></div>
+
+                <div id="explanation-box" class="hidden mb-6 p-4 rounded-xl border transition-all duration-300 text-sm"></div>
+
+                <div class="flex justify-end pt-2 border-t border-vintage-100">
+                    <button id="next-btn" onclick="nextQuestion()" class="hidden items-center gap-2 px-6 py-2.5 bg-vintage-700 text-white rounded-xl hover:bg-vintage-800 transition-all font-serif shadow-sm cursor-pointer">
+                        <span>Siguiente Pregunta</span>
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Result Screen -->
+            <div id="result-screen" class="hidden bg-sepia-card rounded-2xl vintage-shadow p-6 sm:p-10 border border-sepia-border text-center relative overflow-hidden animate-fade-in">
+                <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-vintage-100 border-2 border-sepia-accent flex items-center justify-center text-sepia-gold shadow-md">
+                    <i id="result-trophy-icon" class="fa-solid fa-award text-3xl"></i>
+                </div>
+
+                <span class="text-xs uppercase tracking-widest text-vintage-600 font-semibold mb-2 block">Resultado Final del Test</span>
+                <h2 id="result-title" class="font-serif text-3xl sm:text-4xl font-bold text-sepia-dark mb-2">¡Lectura Concluida!</h2>
+                <div class="text-4xl sm:text-5xl font-serif font-bold text-sepia-accent my-4">
+                    <span id="final-score">0</span><span class="text-2xl text-vintage-400">/20</span>
+                </div>
+                
+                <p id="result-message" class="text-vintage-700 max-w-md mx-auto mb-8 text-sm sm:text-base leading-relaxed font-sans"></p>
+
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button onclick="restartQuiz()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-vintage-700 text-white font-serif rounded-xl hover:bg-vintage-800 transition-all shadow-md cursor-pointer">
+                        <i class="fa-solid fa-rotate-right text-sm"></i>
+                        <span>Intentar de Nuevo</span>
+                    </button>
+                    <button onclick="shareResults()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-vintage-100 text-vintage-800 font-serif border border-vintage-300 rounded-xl hover:bg-vintage-200 transition-all shadow-sm cursor-pointer">
+                        <i class="fa-solid fa-share-nodes text-sm"></i>
+                        <span>Compartir Resultado</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="w-full py-4 px-4 text-center border-t border-vintage-200 bg-sepia-card/50 text-xs text-vintage-600 font-sans">
+        <p>Inspirado en la obra de Nicholas Sparks y la inolvidable película dirigida por Nick Cassavetes.</p>
+    </footer>
+
+    <script>
+        const quizData = [
+            {
+                category: "Orígenes y Personajes",
+                question: "¿En qué década comienza la historia de amor juvenil entre Noah Calhoun y Allie Hamilton?",
+                options: [
+                    "A) Los años 20 (1920s)",
+                    "B) Los años 40 (Verano de 1940)",
+                    "C) Los años 50 (1950s)",
+                    "D) Los años 60 (1960s)"
+                ],
+                correct: 1,
+                explanation: "La historia juvenil principal se ambienta en el verano de 1940 en Seabrook, Carolina del Sur."
+            },
+            {
+                category: "Primer Encuentro",
+                question: "¿Dónde conoce Noah por primera vez a Allie intentando captar su atención de forma audaz?",
+                options: [
+                    "A) En una biblioteca pública",
+                    "B) En una feria de pueblo (Rueda de la fortuna)",
+                    "C) En una heladería local",
+                    "D) En la iglesia del pueblo"
+                ],
+                correct: 1,
+                explanation: "Noah se sube a la estructura de la rueda de la fortuna en plena feria para colgarse con una mano y pedirle una cita."
+            },
+            {
+                category: "Clase Social",
+                question: "¿A qué clase social pertenece la familia de Allie en comparación con la de Noah?",
+                options: [
+                    "A) Ambas familias eran de clase obrera",
+                    "B) Noah era de clase alta y Allie de clase obrera",
+                    "C) Allie pertenecía a una familia adinerada de alta alcurnia, mientras que Noah era un obrero humilde",
+                    "D) Ambas familias eran de la aristocracia sureña"
+                ],
+                correct: 2,
+                explanation: "Allie provenía de una familia burguesa muy adinerada, mientras que Noah trabajaba en una maderera junto a su padre."
+            },
+            {
+                category: "El Verano Inolvidable",
+                question: "¿Qué lugar especial frecuentan Noah y Allie durante sus citas románticas de verano?",
+                options: [
+                    "A) Una casa abandonada (Windsor Plantation) que Noah promete restaurar",
+                    "B) Un faro antiguo en la costa",
+                    "C) Un lago privado de la familia Hamilton",
+                    "D) Una cabaña en la montaña"
+                ],
+                correct: 0,
+                explanation: "La icónica casa antigua es el lugar que Noah sueña con comprar y restaurar para ella."
+            },
+            {
+                category: "La Separación",
+                question: "¿Por qué razón se separan abruptamente Noah y Allie al finalizar el verano?",
+                options: [
+                    "A) Noah decide irse a la guerra voluntariamente",
+                    "B) Los padres de Allie descubren su romance y deciden mudarse repentinamente llevándose a Allie a Charleston",
+                    "C) Allie se enamora del mejor amigo de Noah",
+                    "D) Noah rompe con ella por presión social"
+                ],
+                correct: 1,
+                explanation: "Los padres de Allie desaprobaban totalmente a Noah por su posición económica y se mudan de regreso a Charleston de inmediato."
+            },
+            {
+                category: "Las Cartas de Amor",
+                question: "¿Cuántas cartas le escribió Noah a Allie después de que ella se marchara sin que ella recibiera ninguna?",
+                options: [
+                    "A) 365 cartas (una por cada día del año)",
+                    "B) 100 cartas en total",
+                    "C) 30 cartas durante un mes",
+                    "D) 50 cartas antes de ir a la guerra"
+                ],
+                correct: 0,
+                explanation: "Noah le escribió 365 cartas, una carta diaria durante un año entero. Sin embargo, la madre de Allie las interceptaba y ocultaba."
+            },
+            {
+                category: "La Segunda Guerra Mundial",
+                question: "¿A qué cuerpo militar se alista Noah junto a su entrañable amigo Fin?",
+                options: [
+                    "A) La Marina de los Estados Unidos",
+                    "B) La Infantería de Marina (Marines)",
+                    "C) La Fuerza Aérea",
+                    "D) El Ejército de Tierra (Army)"
+                ],
+                correct: 1,
+                explanation: "Noah y su amigo Fin se alistan en el ejército y participan en el frente de batalla en Europa durante la Segunda Guerra Mundial."
+            },
+            {
+                category: "Tragedia Personal",
+                question: "¿Qué trágico acontecimiento familiar sufre Noah durante la guerra?",
+                options: [
+                    "A) Pierde a su madre en un accidente",
+                    "B) Su padre fallece repentinamente",
+                    "C) Su mejor amigo Fin muere en combate",
+                    "D) Su casa se incendia por completo"
+                ],
+                correct: 2,
+                explanation: "Lamentablemente, su gran amigo Fin muere en combate. Posteriormente, tras regresar, su padre vende la casa para que Noah pueda comprar la plantación."
+            },
+            {
+                category: "La Promesa Cumplida",
+                question: "¿Qué hace Noah con la casa de sus sueños tras regresar de la guerra?",
+                options: [
+                    "A) La vende para hacerse rico",
+                    "B) La compra y la restaura exactamente como le prometió a Allie",
+                    "C) La convierte en un museo militar",
+                    "D) La abandona para siempre"
+                ],
+                correct: 1,
+                explanation: "Noah cumple su promesa restaurando minuciosamente la casa con pintura blanca, contraventanas azules y la famosa habitación de los espejos."
+            },
+            {
+                category: "El Compromiso de Allie",
+                question: "¿Cómo se llama el apuesto y adinerado prometido con el que Allie está a punto de casarse?",
+                options: [
+                    "A) Lon Hammond Jr.",
+                    "B) Charles Richardson",
+                    "C) Edward Cullen",
+                    "D) William Whitaker"
+                ],
+                correct: 0,
+                explanation: "Lon Hammond Jr. es un joven abogado apuesto, rico y encantador que conoce a Allie mientras ella es enfermera voluntaria en un hospital militar."
+            },
+            {
+                category: "El Reencuentro",
+                question: "¿Cómo descubre Allie que Noah ha restaurado la casa y sigue soltero?",
+                options: [
+                    "A) Recibe una carta tardía por correo",
+                    "B) Ve una fotografía de Noah y la casa en el periódico local mientras prueba su vestido de novia",
+                    "C) Se encuentra con Noah por casualidad en una cafetería",
+                    "D) Su madre se lo confiesa antes de la boda"
+                ],
+                correct: 1,
+                explanation: "Allie ve la fotografía de la casa restaurada y de Noah en el periódico local, lo que la deja profundamente conmocionada antes de su boda."
+            },
+            {
+                category: "El Regreso a Seabrook",
+                question: "¿Qué decide hacer Allie al ver la foto de Noah en el periódico?",
+                options: [
+                    "A) Llama por teléfono a Lon para cancelar el compromiso de inmediato",
+                    "B) Conduce su automóvil hasta Seabrook para visitar a Noah y comprobar cómo está",
+                    "C) Se esconde en su casa por vergüenza",
+                    "D) Se casa rápidamente con Lon"
+                ],
+                correct: 1,
+                explanation: "Allie emprende un viaje en coche hacia Seabrook para reencontrarse con Noah, reviviendo todos los sentimientos del pasado."
+            },
+            {
+                category: "El Paseo en Canoa",
+                question: "¿Qué actividad romántica realizan Noah y Allie en el lago durante su emotivo reencuentro?",
+                options: [
+                    "A) Un paseo en canoa rodeados de cientos de cisnes blancos",
+                    "B) Una cena a la luz de las velas en un yate",
+                    "C) Una cabalgata nocturna por la playa",
+                    "D) Un picnic bajo la lluvia"
+                ],
+                correct: 0,
+                explanation: "Uno de los momentos más bellos de la película ocurre cuando reman en una canoa y miles de cisnes blancos los rodean en el lago."
+            },
+            {
+                category: "La Decisión de Allie",
+                question: "¿Qué dilema enfrenta Allie tras pasar esos días con Noah en Seabrook?",
+                options: [
+                    "A) Decidir entre la vida lujosa y segura con Lon o su verdadero e intenso amor por Noah",
+                    "B) Elegir entre mudarse a Europa o quedarse en América",
+                    "C) Decidir si acepta el dinero de sus padres",
+                    "D) Elegir su carrera como pintora profesional"
+                ],
+                correct: 0,
+                explanation: "Allie se debate entre el compromiso estable y aprobado por su familia con Lon, o seguir su corazón junto a Noah."
+            },
+            {
+                category: "La Visita Inesperada",
+                question: "¿Quién aparece sorpresivamente en la casa de Noah para entregarle algo muy valioso a Allie?",
+                options: [
+                    "A) Su prometido Lon",
+                    "B) Su madre Anne Hamilton",
+                    "C) Su padre",
+                    "D) Su mejor amiga Sara"
+                ],
+                correct: 1,
+                explanation: "Su madre Anne viaja a Seabrook y le entrega a Allie un fajo con todas las cartas que Noah le escribió, revelándole su propia juventud frustrada."
+            },
+            {
+                category: "El Pasado de la Madre",
+                question: "¿Qué revelación le hace la madre a Allie sobre su propia juventud?",
+                options: [
+                    "A) Que ella también se casó por dinero",
+                    "B) Que ella estuvo enamorada en su juventud de un hombre pobre y aún guarda un viejo amor en su memoria",
+                    "C) Que odiaba al padre de Allie",
+                    "D) Que nunca quiso tener hijos"
+                ],
+                correct: 1,
+                explanation: "Su madre le muestra que ella misma renunció a un amor humilde de juventud, enseñándole a Allie a no cometer el mismo error."
+            },
+            {
+                category: "La Elección Final",
+                question: "¿A quién elige finalmente Allie tras reflexionar sobre las cartas?",
+                options: [
+                    "A) A Lon, por lealtad familiar",
+                    "B) A Noah, regresando con él para quedarse para siempre",
+                    "C) A ninguno de los dos y viaja sola a Europa",
+                    "D) A su carrera como pintora en Nueva York"
+                ],
+                correct: 1,
+                explanation: "Allie deja plantado a Lon (aunque de forma respetuosa) y regresa corriendo a los brazos de Noah en la casa restaurada."
+            },
+            {
+                category: "El Marco Narrativo (Actualidad)",
+                question: "¿Quién es el anciano que le lee esta historia de amor a una mujer en una residencia de ancianos?",
+                options: [
+                    "A) Un médico del hospital",
+                    "B) El hermano mayor de Allie",
+                    "C) Noah Calhoun en su vejez",
+                    "D) Lon Hammond buscando redención"
+                ],
+                correct: 2,
+                explanation: "Es Noah anciano, quien le lee el cuaderno de notas cada día a Allie."
+            },
+            {
+                category: "La Condición de Allie",
+                question: "¿Qué enfermedad padece Allie en su ancianidad que motiva a Noah a leerle el diario?",
+                options: [
+                    "A) Enfermedad de Alzheimer (pérdida de memoria)",
+                    "B) Cáncer terminal",
+                    "C) Amnesia temporal por un accidente",
+                    "D) Demencia senil leve"
+                ],
+                correct: 0,
+                explanation: "Allie sufre de Alzheimer avanzado, lo que hace que olvide por completo quién es Noah y su propia historia de amor."
+            },
+            {
+                category: "El Desenlace Conmovedor",
+                question: "¿Cómo culmina esta hermosa historia de amor eterno en la última escena?",
+                options: [
+                    "A) Allie la olvida para siempre y Noah se marcha",
+                    "B) Allie recupera la memoria brevemente, recuerdan su pasado y mueren juntos abrazados en la cama",
+                    "C) Noah decide separarse de ella",
+                    "D) La película termina con una boda sorpresa"
+                ],
+                correct: 1,
+                explanation: "En sus últimos momentos, Allie la recuerda por unos minutos y, al amanecer, los encuentran durmiendo juntos y sin vida, abrazados para la eternidad."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const quizHeaderStatus = document.getElementById('quiz-header-status');
+        
+        const currentQNumEl = document.getElementById('current-q-num');
+        const totalQNumEl = document.getElementById('total-q-num');
+        const currentScoreEl = document.getElementById('current-score');
+        const progressBar = document.getElementById('progress-bar');
+        
+        const questionCategoryEl = document.getElementById('question-category');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainerEl = document.getElementById('options-container');
+        const explanationBoxEl = document.getElementById('explanation-box');
+        const nextBtn = document.getElementById('next-btn');
+
+        totalQNumEl.textContent = quizData.length;
+
+        function startQuiz() {
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            quizHeaderStatus.classList.remove('hidden');
+            quizHeaderStatus.classList.add('flex');
+            currentQuestion = 0;
+            score = 0;
+            currentScoreEl.textContent = score;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            answered = false;
+            explanationBoxEl.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            nextBtn.classList.remove('flex');
+
+            const q = quizData[currentQuestion];
+            currentQNumEl.textContent = currentQuestion + 1;
+            
+            const progress = ((currentQuestion) / quizData.length) * 100;
+            progressBar.style.width = `${Math.max(progress, 5)}%`;
+
+            questionCategoryEl.textContent = q.category;
+            questionTextEl.textContent = q.question;
+
+            optionsContainerEl.innerHTML = '';
+            q.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 rounded-xl border border-vintage-200 bg-vintage-50/50 hover:bg-vintage-100 hover:border-vintage-300 transition-all duration-200 text-sepia-dark font-medium flex items-center justify-between group cursor-pointer shadow-sm";
+                btn.innerHTML = `
+                    <span class="font-sans text-sm sm:text-base">${option}</span>
+                    <span class="w-6 h-6 rounded-full border border-vintage-300 flex items-center justify-center text-xs text-vintage-500 group-hover:border-sepia-accent group-hover:text-sepia-accent transition-colors">
+                        <i class="fa-solid fa-check opacity-0"></i>
+                    </span>
+                `;
+                btn.onclick = () => selectOption(index, btn);
+                optionsContainerEl.appendChild(btn);
+            });
+        }
+
+        function selectOption(selectedIndex, selectedBtn) {
+            if (answered) return;
+            answered = true;
+
+            const q = quizData[currentQuestion];
+            const buttons = optionsContainerEl.querySelectorAll('button');
+
+            buttons.forEach((btn, idx) => {
+                btn.disabled = true;
+                btn.classList.remove('hover:bg-vintage-100', 'hover:border-vintage-300', 'cursor-pointer');
+                if (idx === q.correct) {
+                    btn.classList.remove('bg-vintage-50/50', 'border-vintage-200');
+                    btn.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-900', 'font-semibold');
+                    const icon = btn.querySelector('i');
+                    icon.classList.remove('opacity-0');
+                    icon.className = "fa-solid fa-check text-emerald-600";
+                } else if (idx === selectedIndex) {
+                    btn.classList.remove('bg-vintage-50/50', 'border-vintage-200');
+                    btn.classList.add('bg-rose-50', 'border-rose-400', 'text-rose-900');
+                    const icon = btn.querySelector('i');
+                    icon.classList.remove('opacity-0');
+                    icon.className = "fa-solid fa-xmark text-rose-600";
+                } else {
+                    btn.style.opacity = '0.6';
+                }
+            });
+
+            if (selectedIndex === q.correct) {
+                score++;
+                currentScoreEl.textContent = score;
+            }
+
+            explanationBoxEl.textContent = q.explanation;
+            explanationBoxEl.className = selectedIndex === q.correct 
+                ? "mb-6 p-4 rounded-xl border border-emerald-300 bg-emerald-50/80 text-emerald-900 text-sm animate-fade-in font-medium flex items-start gap-3 shadow-sm"
+                : "mb-6 p-4 rounded-xl border border-rose-300 bg-rose-50/80 text-rose-900 text-sm animate-fade-in font-medium flex items-start gap-3 shadow-sm";
+            
+            const iconPrefix = selectedIndex === q.correct ? '<i class="fa-solid fa-circle-check text-emerald-600 mt-0.5 text-lg"></i>' : '<i class="fa-solid fa-circle-exclamation text-rose-600 mt-0.5 text-lg"></i>';
+            explanationBoxEl.innerHTML = `${iconPrefix} <div>${q.explanation}</div>`;
+            explanationBoxEl.classList.remove('hidden');
+
+            nextBtn.classList.remove('hidden');
+            nextBtn.classList.add('flex');
+            if (currentQuestion === quizData.length - 1) {
+                nextBtn.querySelector('span').textContent = "Ver Resultado Final";
+            } else {
+                nextBtn.querySelector('span').textContent = "Siguiente Pregunta";
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            quizHeaderStatus.classList.remove('flex');
+            quizHeaderStatus.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            document.getElementById('final-score').textContent = score;
+            const msgEl = document.getElementById('result-message');
+            const titleEl = document.getElementById('result-title');
+            const trophyIcon = document.getElementById('result-trophy-icon');
+
+            let title = "";
+            let message = "";
+            let trophyClass = "fa-solid ";
+
+            if (score === 20) {
+                title = "¡Amor Eterno y Absoluto!";
+                message = "¡Impecable! Obtuviste la puntuación perfecta de 20/20. Eres un verdadero experto y romántico empedernido que conoce cada detalle del gran amor entre Noah y Allie.";
+                trophyClass += "fa-crown text-sepia-gold";
+            } else if (score >= 15) {
+                title = "¡Un Romance Inolvidable!";
+                message = `¡Excelente trabajo! Lograste ${score} aciertos. Llevas la pasión y las cartas de Seabrook muy dentro de tu corazón. ¡Casi rozas la perfección!`;
+                trophyClass += "fa-award text-sepia-accent";
+            } else if (score >= 10) {
+                title = "¡Bonita Conexión!";
+                message = `Obtuviste ${score} aciertos. Recuerdas los momentos más memorables de la película, aunque quizás sea un buen momento para volver a verla y revivir su magia.`;
+                trophyClass += "fa-heart text-sepia-rose";
+            } else {
+                title = "¡Un Nuevo Comienzo!";
+                message = `Obtuviste ${score} aciertos. No te preocupes, el diario guarda muchos secretos por descubrir. ¡Vuelve a intentarlo y revive esta bella historia de amor!`;
+                trophyClass += "fa-book-open text-vintage-500";
+            }
+
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+            trophyIcon.className = trophyClass;
+        }
+
+        function restartQuiz() {
+            resultScreen.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden');
+        }
+
+        function shareResults() {
+            const shareText = `¡He obtenido ${score}/20 en el test oficial de 'El Diario de una Pasión' (The Notebook)! ¿Podrás superarme? 💌✨`;
+            const tempInput = document.createElement('textarea');
+            tempInput.value = shareText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            try {
+                document.execCommand('copy');
+                alertCustom("¡Resultado copiado al portapapeles para compartir con quien más ames!");
+            } catch (err) {
+                alertCustom("¡Gracias por compartir tu puntaje romántico!");
+            }
+            document.body.removeChild(tempInput);
+        }
+
+        function alertCustom(msg) {
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-5 left-1/2 -translate-x-1/2 bg-sepia-dark text-sepia-bg px-5 py-3 rounded-xl shadow-xl z-50 text-xs sm:text-sm font-medium animate-fade-in border border-sepia-accent";
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => toast.remove(), 500);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
