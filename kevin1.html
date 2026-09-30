@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Interactivo: El Pasajero Oscuro de Dexter</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .theme-dexter {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            color: #f3f4f6;
+            background-image: radial-gradient(circle at 50% 15%, #1f1010 0%, #030712 75%);
+        }
+        .title-font {
+            font-family: 'Special Elite', cursive;
+            letter-spacing: 0.05em;
+            text-shadow: 0 0 15px rgba(220, 38, 38, 0.6);
+        }
+        .card-container {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.9);
+        }
+        .blood-accent {
+            background: linear-gradient(90deg, #991b1b, #dc2626, #991b1b);
+        }
+    </style>
+</head>
+<body class="theme-dexter min-h-screen flex flex-col justify-between p-4 sm:p-6 md:p-10">
+
+    <header class="max-w-3xl mx-auto w-full text-center py-4">
+        <div class="inline-block px-4 py-1 mb-2 border border-red-900/60 bg-red-950/40 text-red-400 text-xs tracking-widest uppercase rounded font-mono">
+            Miami Metro Homicide • Forensic Unit
+        </div>
+        <h1 class="title-font text-3xl sm:text-4xl md:text-5xl text-red-600 mb-2">
+            DEXTER MORGAN
+        </h1>
+        <p class="text-sky-400/80 text-xs sm:text-sm tracking-wide font-mono">
+            // Evaluación de Lealtad al Código de Harry
+        </p>
+    </header>
+
+    <main class="max-w-2xl mx-auto w-full my-auto">
+
+        <!-- Pantalla de Inicio -->
+        <div id="start-screen" class="card-container p-6 sm:p-10 rounded-2xl text-center border-l-4 border-l-red-600">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-950/60 border border-red-800 flex items-center justify-center text-red-500 text-2xl shadow-inner">
+                🔪
+            </div>
+            <h2 class="text-xl sm:text-2xl font-bold mb-3 text-white">¿Cuánto sabes del Asesino de la Sangre?</h2>
+            <p class="text-slate-300 text-sm sm:text-base mb-6 leading-relaxed">
+                Pon a prueba tus conocimientos sobre las temporadas, los rituales, las reglas de Harry y los secretos de Miami Metro. Preguntas aleatorias en cada partida.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-3">
+                <button onclick="startGame(15)" class="bg-red-700 hover:bg-red-800 text-white font-bold px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg uppercase tracking-wider text-xs font-mono">
+                    Desafío Rápido (15 Preguntas)
+                </button>
+                <button onclick="startGame(40)" class="bg-sky-700 hover:bg-sky-600 text-white font-bold px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg uppercase tracking-wider text-xs font-mono">
+                    Examen Completo (40 Preguntas)
+                </button>
+            </div>
+        </div>
+
+        <!-- Pantalla del Juego (Quiz Activo) -->
+        <div id="quiz-screen" class="card-container p-6 sm:p-8 rounded-2xl hidden border-l-4 border-l-sky-500">
+            <!-- Barra de Progreso e Indicadores -->
+            <div class="flex justify-between items-center mb-4 text-xs text-sky-400 font-mono tracking-wider">
+                <span id="question-counter">PREGUNTA 1 DE 15</span>
+                <span id="score-indicator" class="bg-sky-950/80 px-3 py-1 rounded-lg border border-sky-800">Aciertos: 0</span>
+            </div>
+            <div class="w-full bg-slate-800 h-2 rounded-full mb-6 overflow-hidden">
+                <div id="progress-bar" class="bg-sky-500 h-full w-0 transition-all duration-300"></div>
+            </div>
+
+            <!-- Pregunta -->
+            <h3 id="question-text" class="text-base sm:text-xl font-semibold mb-6 text-slate-100 leading-snug">
+                <!-- Texto de la pregunta -->
+            </h3>
+
+            <!-- Opciones -->
+            <div id="options-container" class="space-y-3 mb-6">
+                <!-- Botones de opciones -->
+            </div>
+
+            <!-- Feedback Instantáneo -->
+            <div id="feedback-box" class="hidden p-3 rounded-xl text-sm font-mono text-center mb-4 transition-all"></div>
+
+            <!-- Botón Siguiente -->
+            <div class="flex justify-end">
+                <button id="next-btn" onclick="nextQuestion()" class="hidden bg-sky-600 hover:bg-sky-500 text-white font-semibold px-6 py-2.5 rounded-xl transition text-sm font-mono shadow-md">
+                    Siguiente Caso &rarr;
+                </button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Resultados -->
+        <div id="result-screen" class="card-container p-6 sm:p-10 rounded-2xl text-center hidden border-l-4 border-l-red-600">
+            <h2 class="title-font text-2xl sm:text-3xl text-red-500 mb-2">DIAGNÓSTICO FORENSE</h2>
+            <p id="final-score" class="text-xl sm:text-2xl font-bold text-slate-100 mb-4 font-mono"></p>
+            <div id="result-message" class="text-slate-300 text-sm sm:text-base mb-8 p-4 bg-slate-900/80 rounded-xl border border-slate-800 leading-relaxed">
+                <!-- Mensaje de diagnóstico -->
+            </div>
+            <button onclick="resetGame()" class="bg-red-700 hover:bg-red-800 text-white font-bold px-8 py-3 rounded-xl transition transform hover:scale-105 shadow-lg uppercase tracking-widest text-xs font-mono">
+                Volver a Jugar
+            </button>
+        </div>
+
+    </main>
+
+    <footer class="text-center py-4 text-slate-500 text-xs font-mono">
+        Miami Metro Police Department • Tonight's the Night
+    </footer>
+
+    <script>
+        const questionBank = [
+            { question: "¿Cuál es la primera regla fundamental del Código de Harry?", options: ["Nunca dejes rastros de sangre.", "No te enamores de una víctima.", "Nunca ser atrapado.", "Siempre investiga el pasado de tu objetivo."], correct: 2 },
+            { question: "¿Bajo qué fachada trabaja Dexter Morgan en el Departamento de Policía de Miami Metro?", options: ["Detective de Homicidios", "Analista de Patrones de Salpicaduras de Sangre", "Médico Forense Principal", "Especialista en Informática Forense"], correct: 1 },
+            { question: "¿Cómo apodaban los medios al asesino serial de la primera temporada (su hermano Brian Moser)?", options: ["El Asesino de la Trinidad", "El Carnicero de Bay Harbor", "El Asesino del Camión de Hielo", "El Asesino del Punto de Presión"], correct: 2 },
+            { question: "¿Quién es en realidad el infame 'Carnicero de Bay Harbor'?", options: ["Sgt. Doakes", "Dexter Morgan", "Miguel Prado", "Arthur Mitchell"], correct: 1 },
+            { question: "¿Cuál es el nombre del villano principal de la cuarta temporada, considerado uno de los más peligrosos?", options: ["Travis Marshall", "Jordan Chase", "Arthur Mitchell (Trinity)", "Oliver Saxon"], correct: 2 },
+            { question: "¿Cómo se llama el hijo biológico de Dexter y Rita?", options: ["Astor", "Cody", "Harrison", "Brian"], correct: 2 },
+            { question: "¿Qué peculiar método utiliza Dexter para neutralizar a sus víctimas antes de llevarlas a su mesa?", options: ["Un disparo con silenciador", "Una jeringa con Etorfina (M99)", "Un golpe fuerte con una barra de metal", "Cloroformo en un pañuelo"], correct: 1 },
+            { question: "¿Cuál es el nombre de la hermana adoptiva de Dexter que trabaja como detective?", options: ["Debra Morgan", "Maria LaGuerta", "Angel Batista", "Vince Masuka"], correct: 0 },
+            { question: "¿Dónde guarda Dexter los macabros trofeos de cada uno de sus 'pasajeros oscuros'?", options: ["En una caja fuerte en su lugar de trabajo", "En el fondo del océano junto a los cuerpos", "En una caja de madera oculta dentro de su aire acondicionado", "En su baúl bajo llave"], correct: 2 },
+            { question: "¿Qué pasa con la sangre que Dexter recolecta en sus diapositivas de cristal?", options: ["Las destruye inmediatamente después de cada ejecución", "Las guarda como trofeos personales en una caja dentro de su aire acondicionado", "Las dona a la policía como evidencia falsa", "Las utiliza para pintar cuadros en su tiempo libre"], correct: 1 },
+            { question: "¿Cómo se llama el padre adoptivo de Dexter?", options: ["Harry Morgan", "Tom Matthews", "James Doakes", "Brian Moser"], correct: 0 },
+            { question: "¿Cuál es el nombre de la esposa de Dexter en las primeras temporadas?", options: ["Lila Tournay", "Rita Bennett", "Hannah McKay", "Debra Morgan"], correct: 1 },
+            { question: "¿Cómo se llaman los dos hijos adoptivos de Rita?", options: ["Harrison y Cody", "Astor y Cody", "Astor y Harrison", "Bobby y Sally"], correct: 1 },
+            { question: "¿En qué estado se oculta Dexter bajo el alias de Jim Lindsay en 'New Blood'?", options: ["Florida", "Oregon", "New York", "Texas"], correct: 1 },
+            { question: "¿Cuál es el nombre del pueblo nevado donde vive Dexter en 'New Blood'?", options: ["Iron Lake", "Silver Creek", "Coldwater", "Pine Valley"], correct: 0 },
+            { question: "¿Quién descubre el verdadero secreto de Dexter al final de la temporada 2?", options: ["Debra Morgan", "James Doakes", "Maria LaGuerta", "Angel Batista"], correct: 1 },
+            { question: "¿Cómo muere James Doakes?", options: ["En un tiroteo con Dexter", "En la explosión de la cabaña de los Everglades", "Ahogado en el océano", "Asesinado por Brian Moser"], correct: 1 },
+            { question: "¿Quién asesina a Rita Bennett al final de la temporada 4?", options: ["Dexter Morgan", "Arthur Mitchell (Trinity)", "Lila Tournay", "Jordan Chase"], correct: 1 },
+            { question: "¿Cómo encuentra Trinity a Rita en la bañera?", options: ["Muerta por ahogamiento", "Con un corte en la femoral", "Con sobredosis de pastillas", "Apuñalada múltiples veces"], correct: 1 },
+            { question: "¿Cuál es el patrón de crímenes del Asesino de la Trinidad (Arthur Mitchell)?", options: ["Matar grupos de tres con un ciclo repetitivo de cuatro crímenes", "Matar solo en días festivos", "Dejar notas en código morse", "Secuestrar niños en parques"], correct: 0 },
+            { question: "¿Quién es el fiscal de distrito corrupto que se alía brevemente con Dexter en la tercera temporada?", options: ["Miguel Prado", "Prado's brother Ramon", "Stan Liddy", "Travis Marshall"], correct: 0 },
+            { question: "¿Qué apodo recibe el asesino de la temporada 6 centrado en el Apocalipsis?", options: ["El Asesino del Juicio Final (Travis Marshall)", "El Carnicero", "El Guadaña", "El Acribillador"], correct: 0 },
+            { question: "¿Qué relación tiene Hannah McKay con Dexter en las últimas temporadas?", options: ["Es su pareja y comparte su visión criminal", "Es una investigadora del FBI", "Es la hermana secreta de Rita", "Es una víctima que logró escapar"], correct: 0 },
+            { question: "¿Cómo termina originalmente la serie clásica (Temporada 8) antes de 'New Blood'?", options: ["Dexter se convierte en leñador solitario en Oregón", "Dexter es atrapado y ejecutado en Florida", "Dexter muere en alta mar con Debra", "Dexter se entrega a la policía"], correct: 0 },
+            { question: "¿Cuál es la famosa frase con la que Dexter suele abrir los episodios de la serie?", options: ["'Tonight's the night...'", "'Blood never lies.'", "'The bay harbours many secrets.'", "'Harry taught me well.'"], correct: 0 }
+        ];
+
+        let activeQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let isAnswered = false;
+
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const questionCounter = document.getElementById('question-counter');
+        const scoreIndicator = document.getElementById('score-indicator');
+        const progressBar = document.getElementById('progress-bar');
+        const feedbackBox = document.getElementById('feedback-box');
+        const nextBtn = document.getElementById('next-btn');
+        const finalScore = document.getElementById('final-score');
+        const resultMessage = document.getElementById('result-message');
+
+        function startGame(count) {
+            activeQuestions = [...questionBank].sort(() => Math.random() - 0.5).slice(0, count);
+            currentIndex = 0;
+            score = 0;
+            
+            startScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            
+            loadCurrentQuestion();
+        }
+
+        function loadCurrentQuestion() {
+            isAnswered = false;
+            nextBtn.classList.add('hidden');
+            feedbackBox.classList.add('hidden');
+            feedbackBox.className = 'hidden p-3 rounded-xl text-sm font-mono text-center mb-4 transition-all';
+
+            const current = activeQuestions[currentIndex];
+            questionCounter.textContent = `PREGUNTA ${currentIndex + 1} DE ${activeQuestions.length}`;
+            scoreIndicator.textContent = `Aciertos: ${score}`;
+            
+            const progressPercent = ((currentIndex) / activeQuestions.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+
+            questionText.textContent = current.question;
+            optionsContainer.innerHTML = '';
+
+            current.options.forEach((optionText, optionIndex) => {
+                const btn = document.createElement('button');
+                btn.textContent = optionText;
+                btn.className = "w-full text-left p-3.5 sm:p-4 rounded-xl border border-slate-700 bg-slate-900/90 hover:bg-slate-800 transition text-slate-200 text-sm sm:text-base font-medium shadow-sm flex items-center justify-between";
+                btn.onclick = () => selectAnswer(optionIndex, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(selectedIndex, selectedButton) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const current = activeQuestions[currentIndex];
+            const allButtons = optionsContainer.children;
+
+            if (selectedIndex === current.correct) {
+                selectedButton.className = "w-full text-left p-3.5 sm:p-4 rounded-xl border border-emerald-500 bg-emerald-950/60 text-emerald-200 text-sm sm:text-base font-medium shadow-md";
+                feedbackBox.textContent = "¡Respuesta correcta! Evidencia confirmada.";
+                feedbackBox.classList.remove('hidden');
+                feedbackBox.classList.add('bg-emerald-950/90', 'border', 'border-emerald-600', 'text-emerald-300');
+                score++;
+            } else {
+                selectedButton.className = "w-full text-left p-3.5 sm:p-4 rounded-xl border border-red-500 bg-red-950/60 text-red-200 text-sm sm:text-base font-medium shadow-md";
+                allButtons[current.correct].className = "w-full text-left p-3.5 sm:p-4 rounded-xl border border-emerald-500 bg-emerald-950/60 text-emerald-200 text-sm sm:text-base font-medium shadow-md";
+                feedbackBox.textContent = `Incorrecto. La respuesta era: "${current.options[current.correct]}"`;
+                feedbackBox.classList.remove('hidden');
+                feedbackBox.classList.add('bg-red-950/90', 'border', 'border-red-600', 'text-red-300');
+            }
+
+            scoreIndicator.textContent = `Aciertos: ${score}`;
+            nextBtn.classList.remove('hidden');
+
+            if (currentIndex === activeQuestions.length - 1) {
+                nextBtn.textContent = "Ver Diagnóstico Final &rarr;";
+            }
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if (currentIndex < activeQuestions.length) {
+                loadCurrentQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            finalScore.textContent = `Puntuación: ${score} de ${activeQuestions.length}`;
+
+            const ratio = score / activeQuestions.length;
+            let diagnosis = "";
+            if (ratio === 1) {
+                diagnosis = "¡Impecable! Tu dominio del Código de Harry y la ciencia forense es total. Ni Maria LaGuerta sospecharía de ti.";
+            } else if (ratio >= 0.7) {
+                diagnosis = "Excelente trabajo en la escena del crimen. Conoces a la perfección los secretos de Miami Metro.";
+            } else {
+                diagnosis = "Demasiados cabos sueltos y rastros de sangre. El Asesino del Camión de Hielo te habría atrapado rápidamente.";
+            }
+            resultMessage.textContent = diagnosis;
+        }
+
+        function resetGame() {
+            resultScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
