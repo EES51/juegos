@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Quest Arcade - Reina del Flow & Café</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background-color: #0b021a;
+            color: #f3f4f6;
+            image-rendering: pixelated;
+        }
+        .pixel-box {
+            box-shadow: 4px 4px 0px #000000, 8px 8px 0px #e50914;
+            border: 4px solid #f3f4f6;
+        }
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 0, 0, 0.25) 50%,
+                rgba(0, 0, 0, 0.25)
+            );
+            background-size: 100% 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 scanlines relative overflow-x-hidden">
+
+    <header class="text-center mb-4 z-10">
+        <h1 class="text-xl md:text-3xl text-red-600 mb-1 drop-shadow-[3px_3px_0px_#000]">NETFLIX ARCADE QUEST</h1>
+        <p class="text-[10px] text-purple-300">40 PREGUNTAS POR CATEGORÍA - REINA DEL FLOW & CAFÉ</p>
+    </header>
+
+    <main class="w-full max-w-2xl z-10">
+        <div class="pixel-box bg-purple-950 p-4 md:p-6 rounded-none relative">
+            <canvas id="arcadeCanvas" class="w-full bg-slate-950 border-2 border-red-700 block cursor-pointer"></canvas>
+
+            <div id="ui-overlay" class="mt-4 flex justify-between items-center text-[10px] text-purple-300 border-t-2 border-purple-900 pt-3">
+                <span id="instruction-hint">USA LAS FLECHAS ⬆️ ⬇️ O CLIC EN LAS OPCIONES</span>
+                <span id="credit-status" class="text-yellow-400">NETFLIX COIN: 01</span>
+            </div>
+        </div>
+    </main>
+
+    <footer class="mt-4 text-center text-[9px] text-purple-400 z-10">
+        <p>INSERT COIN • PRESS ENTER OR CLICK TO SELECT</p>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('arcadeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = 640;
+        canvas.height = 480;
+
+        let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER, VICTORY
+        let selectedCategory = 0;
+        let selectedOption = 0;
+        let score = 0;
+        let currentQuestionIndex = 0;
+        let timer = 30;
+        let timerInterval = null;
+        let feedbackMessage = '';
+        let isCorrect = false;
+        let currentActiveQuestions = [];
+
+        const categories = [
+            { id: 'reina1', name: '🎤 LA REINA DEL FLOW: TEMPORADA 1' },
+            { id: 'reina2', name: '🎵 LA REINA DEL FLOW: TEMPORADA 2' },
+            { id: 'cafe1', name: '☕ CAFÉ CON AROMA: HACIENDA & AMOR' },
+            { id: 'cafe2', name: '💼 CAFÉ CON AROMA: NEGOCIOS & DRAMA' }
+        ];
+
+        const questionsData = {
+            reina1: [
+                { q: "¿Cómo se llama el verdadero nombre de Yeimy Montoya en la serie?", options: ["Yeimy Montoya", "Catalina Bedoya", "Gema Granados", "Silvia Duarte"], correct: 0 },
+                { q: "¿Quién traiciona a Yeimy Montoya al inicio robándole sus canciones?", options: ["Charly Flow", "Manín", "Juancho", "Pez Ordinario"], correct: 0 },
+                { q: "¿Cuántos años pasa Yeimy en la cárcel injustamente?", options: ["10 años", "17 años", "5 años", "20 años"], correct: 1 },
+                { q: "¿Qué apodo artístico usa Charly en la industria musical?", options: ["Charly Flow", "Flow Master", "Charly King", "El Rey del Flow"], correct: 0 },
+                { q: "¿Quién es el fiel amigo de la infancia y eterno enamorado de Yeimy?", options: ["Juan Camilo Mesa (Juancho)", "Erick", "Axel", "Borracho"], correct: 0 },
+                { q: "¿Cómo se llama el tío criminal de Charly Flow?", options: ["Dumar Albarrán (Manín)", "Don Edgar", "El Coronel", "Lucio"], correct: 0 },
+                { q: "¿Qué nombre usa Yeimy cuando regresa encubierta para vengarse?", options: ["Tamy Andrade", "Karla Rossi", "Sara Gómez", "Elena Cruz"], correct: 0 },
+                { q: "¿Cuál es el género musical principal que domina la serie?", options: ["Reggaeton y Urbana", "Salsa clásica", "Vallenato", "Rock en español"], correct: 0 },
+                { q: "¿Cómo se llama el sello discográfico donde triunfa Charly?", options: ["White Shark", "Master Music", "Gold Sound", "Flow Records"], correct: 0 },
+                { q: "¿Qué le ocurre trágicamente a los padres de Yeimy al inicio?", options: ["Asesinados por orden de Manín", "Mueren en un accidente", "Abandonan el país", "Desaparecen sin rastro"], correct: 0 },
+                { q: "¿Qué relación familiar tiene Charly con Manín?", options: ["Es su sobrino y protegido", "Es su hermano menor", "Es su padre biológico", "No tienen parentesco"], correct: 0 },
+                { q: "¿Cuál es el nombre artístico del hijo de Yeimy y Charly?", options: ["Erick Flow / Pez Koi", "Baby Charly", "Junior", "Mateíto"], correct: 0 },
+                { q: "¿Quién cría a Erick sin saber inicialmente quiénes son sus verdaderos padres?", options: ["Juancho y Cata", "Manín", "La abuela", "Charly"], correct: 0 },
+                { q: "¿Qué instrumento toca magistralmente Juancho en su estudio?", options: ["Teclado / Producción", "Guitarra eléctrica", "Batería", "Saxofón"], correct: 0 },
+                { q: "¿Cómo se llama la esposa de Juancho al inicio de la historia?", options: ["Catalina Bedoya", "Gema", "Irma", "Ligia"], correct: 0 },
+                { q: "¿Qué personaje sufre una gran obsesión enfermiza por Charly Flow?", options: ["Gema Granados", "Yeimy Montoya", "Daniela", "Vanesa"], correct: 0 },
+                { q: "¿Qué trágico destino sufre Gema Granados?", options: ["Asesinada por Manín", "Huye a Europa", "Se suicida", "Pierde la memoria"], correct: 0 },
+                { q: "¿Cómo se llama el productor musical aliado de Yeimy en su productora?", options: ["Axel", "Pez Ordinario", "Largo", "Borracho"], correct: 0 },
+                { q: "¿Qué canción catapulta la fama internacional de Charly en la T1?", options: ["'Reflejo' / 'Dancing Flow'", "'Perdóname'", "'Amor de Barrio'", "'Fantasía'"], correct: 0 },
+                { q: "¿Qué papel juega la DEA en la vida de Charly Flow?", options: ["Lo investigan por vínculos con Manín", "Lo contratan como agente", "Lo ignoran por completo", "Lo protegen"], correct: 0 },
+                { q: "¿Cómo se llama la madre de Charly Flow?", options: ["Ligia Martínez", "Carmen", "Rosa", "Matilde"], correct: 0 },
+                { q: "¿Con quién se casa Ligia tras separarse del padre de Charly?", options: ["Albeiro", "Dumar (Manín)", "Don Edgar", "Juancho"], correct: 0 },
+                { q: "¿Qué delito principal incrimina a Yeimy al inicio mandándola a prisión?", options: ["Tráfico de drogas (trampa de Manín)", "Robo de bancos", "Fraude fiscal", "Amenazas públicas"], correct: 0 },
+                { q: "¿Cómo descubre Yeimy que Charly le robó sus libretas de canciones?", options: ["Escucha sus temas sonando en la radio con la voz de Charly", "Se lo confiesa su tía", "Lo encuentra en internet", "Los ve en un concierto"], correct: 0 },
+                { q: "¿Qué apodo musical se gana Erick en las batallas de gallos?", options: ["Pez Koi", "El Tiburón", "Dragon Flow", "Golden Boy"], correct: 0 },
+                { q: "¿Quién es la joven promesa musical que compite con Erick y de quien se enamora?", options: ["Irma ('La Perla')", "Daniela", "Luz Dary", "Sofía"], correct: 0 },
+                { q: "¿Qué accidente sufre Erick que pone en riesgo su carrera musical?", options: ["Un atentado provocado por enemigos de Manín", "Un choque de autos", "Una lesión en las cuerdas vocales", "Una caída en tarima"], correct: 0 },
+                { q: "¿Cómo logra Tamy infiltrarse en el círculo íntimo de Charly Flow?", options: ["Como su asesora de imagen y compositora", "Como corista", "Como ejecutiva de la DEA", "Como periodista"], correct: 0 },
+                { q: "¿Cuál es el escondite secreto donde Manín opera sus negocios ilícitos?", options: ["Una caleta oculta en la ciudad / hacienda", "Una bodega abandonada", "Un banco", "Un penthouse"], correct: 0 },
+                { q: "¿Qué famoso reggaetonero invitado aparece interpretándose a sí mismo en la serie?", options: ["Nicky Jam / Juanes", "Daddy Yankee", "J Balvin", "Maluma"], correct: 0 },
+                { q: "¿Cómo reacciona Charly al descubrir que Tamy Andrade es en realidad Yeimy Montoya?", options: ["Siente culpa, terror y obsesión renovada", "La recibe con alegría", "No le cree", "Huye del país"], correct: 0 },
+                { q: "¿Qué rol cumple el comisario o investigador principal contra Manín?", options: ["La policía anticorrupción y la DEA", "Investigadores privados", "Interpol", "La policía local exclusivamente"], correct: 0 },
+                { q: "¿Cómo termina la primera temporada para Charly Flow?", options: ["Capturado y enviado a prisión por sus delitos", "Libre y multimillonario", "Retirado en la playa", "Huyendo a Miami"], correct: 0 },
+                { q: "¿Qué siente Yeimy al ver caer a Charly al final de la T1?", options: ["Sentimiento de justicia lograda tras 17 años", "Tristeza profunda", "Indiferencia total", "Ganas de casarse con él"], correct: 0 },
+                { q: "¿Cuál es el lema principal de la productora de Yeimy y Juancho?", options: ["Hacer música con alma y verdad", "Ganar dinero rápido", "Fama sin límites", "Controlar el mercado"], correct: 0 },
+                { q: "¿Cómo se llama el bar o centro de reunión musical de los jóvenes en la comuna?", options: ["El Combo", "La Discoteca", "El Refugio", "Bar Central"], correct: 0 },
+                { q: "¿Qué relación sentimental consolida Yeimy al cierre de la primera temporada?", options: ["Inicia un camino junto a Juancho", "Se casa con Charly", "Se queda sola", "Viaja con Erick"], correct: 0 },
+                { q: "¿Qué representan las libretas de canciones para Yeimy?", options: ["Su alma, su legado y la memoria de sus padres", "Un simple hobby", "Un contrato comercial", "Documentos legales"], correct: 0 },
+                { q: "¿Cuál es el impacto de las canciones de Yeimy en la cultura urbana de la serie?", options: ["Revolucionan la industria y marcan generaciones", "Nadie las escucha", "Son un fracaso comercial", "Son prohibidas"], correct: 0 },
+                { q: "¿Qué mensaje principal deja la primera temporada de La Reina del Flow?", options: ["La justicia y la verdad siempre salen a la luz", "El dinero lo compra todo", "La venganza es eterna", "La fama no importa"], correct: 0 }
+            ],
+            reina2: [
+                { q: "¿Qué amenaza del pasado regresa para atormentar a Yeimy en la Temporada 2?", options: ["Manín (quien sobrevive oculto) y Gray", "Un nuevo productor", "Los padres de Charly", "La policía"], correct: 0 },
+                { q: "¿Bajo qué fachada regresa Manín en la segunda temporada?", options: ["Como un hombre con cirugía estética (Milton / Alias)", "Como un sacerdote", "Como un empresario extranjero", "Como policía"], correct: 0 },
+                { q: "¿Qué condición psicológica sufre Yeimy tras el atentado al inicio de la T2?", options: ["Ataques de pánico, estrés postraumático y paranoia", "Amnesia total", "Ceguera temporal", "Pérdida de habla"], correct: 0 },
+                { q: "¿Quién es el nuevo y peligroso antagonista internacional que se alía con Manín?", options: ["Gray (Zafiro / Titán)", "El capo de Cali", "Un mafioso italiano", "Un hacker ruso"], correct: 0 },
+                { q: "¿Por qué Charly Flow colabora con las autoridades en la T2?", options: ["Para reducir su condena y proteger a su familia de Manín", "Porque quiere retirarse", "Por dinero", "Por amor a Yeimy"], correct: 0 },
+                { q: "¿Qué nueva disquera rival compite ferozmente con Surround Vibes?", options: ["Luxen Records", "Alpha Music", "Flow Empire", "King Sound"], correct: 0 },
+                { q: "¿Quién lidera la disquera rival Luxen en la T2?", options: ["Mike Rivera", "Charly Flow", "Borracho", "Don Edgar"], correct: 0 },
+                { q: "¿Qué relación amorosa se tensiona fuertemente entre Yeimy y Juancho en la T2?", options: ["Su relación entra en crisis por los celos, la presión y el peligro", "Se casan inmediatamente", "Se separan para siempre en el capítulo 1", "Viajan por el mundo"], correct: 0 },
+                { q: "¿De quién se enamora profundamente Erick en la segunda temporada?", options: ["De Irma ('La Perla')", "De una fanática", "De una ejecutiva", "De nadie"], correct: 0 },
+                { q: "¿Qué grave problema de salud mental y presión sufre Irma en la T2?", options: ["Depresión severa, ataques de pánico y ansiedad extrema", "Diabetes", "Problemas cardíacos", "Amnesia"], correct: 0 },
+                { q: "¿Cómo intenta Manín destruir psicológicamente a Yeimy en esta temporada?", options: ["Atacando a sus seres queridos y saboteando su música", "Comprando su casa", "Robando su dinero", "Envenenándola lentamente"], correct: 0 },
+                { q: "¿Qué papel juega Charly en la protección de Yeimy a pesar de su pasado?", options: ["Arriesga su propia vida para salvarla de Manín y Gray", "La traiciona nuevamente", "Se une a Manín", "Se aleja de todo"], correct: 0 },
+                { q: "¿Cómo se llama el hacker o experto tecnológico que ayuda al combo de Yeimy?", options: ["Kepler / colaboradores informáticos", "Axel", "El Ñato", "Borracho"], correct: 0 },
+                { q: "¿Qué canción icónica interpreta Charly que conmueve a toda Colombia en la T2?", options: ["'Cambio de Piel' / Temas de redención", "'La reina'", "'Fuego'", "'Sin límite'"], correct: 0 },
+                { q: "¿Qué trágico suceso marca un antes y después en la vida de Irma?", options: ["Un colapso emocional en plena cima de su carrera", "Un accidente de bus", "Un robo en su casa", "Se retira a estudiar"], correct: 0 },
+                { q: "¿Cómo descubre Yeimy el escondite exacto de Manín en la T2?", options: ["Siguiendo pistas de inteligencia junto a la policía", "Por casualidad en la calle", "Se lo cuenta Charly", "Lo ve en televisión"], correct: 0 },
+                { q: "¿Qué desenlace final tiene el temido villano Manín en la serie?", options: ["Muere abatido en enfrentamiento definitivo", "Huye al extranjero", "Queda en coma", "Es absuelto"], correct: 0 },
+                { q: "¿Cuál es el destino del villano Mike Rivera al descubrirse sus crímenes?", options: ["Arrestado y llevado a la justicia por corrupción", "Huye en yate", "Muere envenenado", "Queda en bancarrota"], correct: 0 },
+                { q: "¿Cómo evoluciona la relación entre Yeimy y Charly al final de la T2?", options: ["Logran sanar heridas, perdonarse y consolidar un amor maduro", "Terminan como enemigos mortales", "No vuelven a hablar", "Charly desaparece"], correct: 0 },
+                { q: "¿Qué mensaje deja el final de La Reina del Flow Temporada 2?", options: ["El perdón, la resiliencia y el poder transformador del arte", "Que la venganza lo vale todo", "Que la fama es efímera", "Que el dinero es la felicidad"], correct: 0 },
+                { q: "¿Qué apodo le da la prensa a Yeimy Montoya por su imperio musical?", options: ["La Reina del Flow", "La Patrona", "La Diosa Urbana", "La Emperatriz"], correct: 0 },
+                { q: "¿Qué rol cumple Ligia en la caída definitiva de Manín?", options: ["Sirve de pieza clave arriesgando su vida para acorralarlo", "No participa", "Ayuda a escapar a Manín", "Se va del país"], correct: 0 },
+                { q: "¿Cómo reacciona Erick al enterarse de todas las verdades de su familia?", options: ["Madura y se convierte en el pilar emocional de Yeimy", "Se rebela y se va de casa", "Abandona la música", "Demanda a todos"], correct: 0 },
+                { q: "¿Qué estilo visual caracteriza los videoclips de Surround Vibes en la T2?", options: ["Alta producción urbana con estética neón y callejera", "Videos caseros en blanco y negro", "Conciertos acústicos", "Animación 3D"], correct: 0 },
+                { q: "¿Quién compone los temas principales que cantan los actores en la vida real?", options: ["Keityn, Juan Pablo Vega, Pitizion (Intérpretes y compositores)", "Maluma exclusivamente", "Artistas internacionales", "Los mismos actores sin ayuda"], correct: 0 },
+                { q: "¿Qué premio o reconocimiento internacional persiguen los artistas en la T2?", options: ["Discos de Diamante y nominaciones a galas globales", "Premios locales pequeños", "Grammys angcursos", "Ninguno"], correct: 0 },
+                { q: "¿Cómo maneja Yeimy su faceta como mentora de nuevos talentos?", options: ["Con empatía, exigencia y protegiéndolos de los abusos de la industria", "Con autoritarismo estricto", "Los explota comercialmente", "Los ignora"], correct: 0 },
+                { q: "¿Qué ocurre con la amistad entre Juancho y Charly al final?", options: ["Logran un respeto mutuo por el bien de la música y sus familias", "Siguen odiándose", "Se vuelven socios comerciales íntimos", "No se vuelven a ver"], correct: 0 },
+                { q: "¿Cuál es la última escena simbólica de la serie en el gran concierto?", options: ["Todos unidos cantando el triunfo del amor, la paz y la música", "Una pelea campal", "Un cierre en silencio", "Un apagón general"], correct: 0 },
+                { q: "¿Qué enseñanza principal deja la trayectoria de Charly Flow?", options: ["Que el ego y la codicia destruyen, pero el arrepentimiento y el trabajo duro salvan", "Que la maldad siempre triunfa", "Que el dinero compra el alma", "Que no se puede cambiar"], correct: 0 },
+                { q: { q: "¿Qué rol juega la comuna en la identidad de los protagonistas?", options: ["Es su raíz, su inspiración y fuente de resiliencia cultural", "Solo es un lugar peligroso", "La olvidan al volverse ricos", "No tiene importancia"], correct: 0 } },
+                { q: "¿Cómo se llama el centro de producción musical fundado por Yeimy y Juancho?", options: ["Surround Vibes", "Flow Studio", "Master Beat", "Ritmo Urbano"], correct: 0 },
+                { q: "¿Qué siente Gray al descubrir que fue manipulado por Manín?", options: ["Ira y deseos de venganza contra él", "Tristeza", "Agradecimiento", "Indiferencia"], correct: 0 },
+                { q: "¿Cómo se resuelve el conflicto legal de Charly en la T2?", options: ["Cumpliendo parte de su condena y colaborando con la justicia", "Fugándose a otro continente", "Sobornando al juez", "Siendo declarado inocente de inmediato"], correct: 0 },
+                { q: "¿Qué impacto tuvo 'La Reina del Flow' a nivel internacional en Netflix?", options: ["Se convirtió en un fenómeno global de audiencia en múltiples países", "Nadie la vio fuera de Colombia", "Fue un fracaso de streaming", "Solo se vio en Norteamérica"], correct: 0 },
+                { q: "¿Cuál es el instrumento que acompaña a Erick en sus composiciones más íntimas?", options: ["La guitarra acústica", "El piano de cola", "El ukelele", "El bajo"], correct: 0 },
+                { q: "¿Cómo apoya Yeimy a las mujeres víctimas de violencia en la serie?", options: ["A través de fundaciones y mensajes en sus canciones de empoderamiento", "No participa en causas sociales", "Solo dona dinero anónimo", "Contratándolas en su disquera"], correct: 0 },
+                { q: "¿Qué representa el fénix tatuado en la piel de Yeimy?", options: ["Resurrección, renacimiento y renacer de las cenizas tras el dolor", "Amor eterno", "Venganza ciega", "Poder militar"], correct: 0 },
+                { q: "¿Qué frase resume la filosofía de vida de Yeimy Montoya en la cumbre de su éxito?", options: ["'El dolor se convierte en canción, y la justicia en libertad'", "'Ojo por ojo'", "'El dinero es lo primero'", "'Olvidar el pasado'"], correct: 0 }
+            ],
+            cafe1: [
+                { q: "¿Cómo se llama la hermosa hacienda cafetera donde inicia la historia de amor?", options: ["Hacienda Casablanca", "Hacienda El Paraíso", "Hacienda San José", "Hacienda La Esperanza"], correct: 0 },
+                { q: "¿Quién es la protagonista recolectora de café que enamora al heredero?", options: ["Gaviota (Lucía Vallejo / Teresa Suárez)", "Lucia Sanclemente", "Marcia", "Julia"], correct: 0 },
+                { q: "¿Cuál es el verdadero nombre de pila de 'Gaviota'?", options: ["Teresa Suárez (Ga-viota)", "Lucía Sanclemente", "Paola", "Mariana"], correct: 0 },
+                { q: "¿Quién es el joven heredero de la familia Vallejo que se enamora de Gaviota?", options: ["Sebastián Vallejo", "Iván Vallejo", "Bernardo", "Arthur"], correct: 0 },
+                { q: "¿Cómo se llama la matriarca de la familia Vallejo al inicio?", options: ["Doña Carmenza (madre de Gaviota) / Octavia Vallejo (matriarca)", "Doña Julia de Vallejo", "Doña Sofía", "Doña Elena"], correct: 1 },
+                { q: "¿Qué tradición familiar cumplen cada año en la hacienda Casablanca?", options: ["La cosecha de café cafetera", "La cosecha de flores", "Fiestas patronales", "Carrera de caballos"], correct: 0 },
+                { q: "¿Por qué debe marchar temporalmente Sebastián Vallejo al extranjero (Londres/NY)?", options: ["A terminar sus estudios y negocios de finanzas", "Por exilio político", "Porque es deportista", "A vacacionar"], correct: 0 },
+                { q: "¿Qué promesa se hacen Gaviota y Sebastián antes de que él viaje?", options: ["Reencontrarse en la hacienda en un año exacto para casarse", "Olvídarse para siempre", "Casarse por poder", "Comprar otra finca"], correct: 0 },
+                { q: "¿Quién es la madre de Sebastián Vallejo?", options: ["Julia de Vallejo", "Carmenza", "Lucía", "Marcia"], correct: 0 },
+                { q: "¿Qué trágico suceso ocurre al patriarca Octavio Vallejo al inicio de la trama?", options: ["Muere repentinamente dejando testamentos e intrigas familiares", "Se retira a Europa", "Pierde la fortuna en la bolsa", "Viaja al espacio"], correct: 0 },
+                { q: "¿Cómo intenta Gaviota superarse profesionalmente tras la muerte de Octavio?", options: ["Estudiando catación de café y administración agrícola", "Haciéndose modelo", "Mudándose a Europa", "Abriendo un restaurante"], correct: 0 },
+                { q: "¿Quién es la ambiciosa y calculadora prometida socialité de Sebastián?", options: ["Lucía Sanclemente", "Lucrecia", "Marcia", "Paula"], correct: 0 },
+                { q: "¿Qué maquinaciones realiza Lucía Sanclemente para separar a Sebastián de Gaviota?", options: ["Mentiras, trampas y alianzas con Iván Vallejo", "Viajes falsos", "Amenazas de muerte", "Robo de dinero"], correct: 0 },
+                { q: "¿Qué papel juega Iván Vallejo (el hermano de Sebastián) en los negocios?", options: ["Ambicioso, corrupto y enemigo de la estabilidad familiar", "El hermano ejemplar", "Un monje", "Un empleado humilde"], correct: 0 },
+                { q: "¿Cómo se llama la madre de Gaviota que recolecta café junto a ella?", options: ["Carmenza Suárez", "Rosa", "Carmen", "Luisa"], correct: 0 },
+                { q: "¿Qué aroma y sabor define el café especial de la hacienda en la serie?", options: ["Notas florales, chocolate y suavidad única colombiana", "Café amargo industrial", "Sabor a vainilla química", "Café instantáneo"], correct: 0 },
+                { q: "¿Por qué Gaviota no puede contactar fácilmente a Sebastián cuando regresa?", options: ["Por las intrigas de Lucía e Iván que bloquean sus cartas y llamadas", "Porque no quiere saber nada de él", "Porque viaja a la selva", "Porque pierde su teléfono"], correct: 0 },
+                { q: "¿Qué cargo importante llega a dominar Gaviota gracias a su conocimiento del café?", options: ["Experta catadora y ejecutiva de exportación cafetera", "Empleada doméstica", "Dueña de la competencia", "Contadora"], correct: 0 },
+                { q: "¿Qué siente Sebastián al descubrir los engaños tejidos a su al rededor?", options: ["Indignación, furia contra su familia y deseo de buscar a Gaviota", "Alegría", "Indiferencia", "Culpa"], correct: 0 },
+                { q: "¿Cómo se llama el mejor amigo y confidente de Sebastián en la empresa?", options: ["Carlos / Directivos de Café Vallejo", "Bernardo", "Luigi", "Mateo"], correct: 0 },
+                { q: "¿Qué impacto tiene la crisis financiera cafetera en la empresa de los Vallejo?", options: ["Los pone al borde de la quiebra total por malas inversiones de Iván", "Los hace más ricos", "No les afecta", "El gobierno los rescata inmediatamente"], correct: 0 },
+                { q: "¿Cómo demuestra Gaviota su amor incondicional por la tierra cafetera?", options: ["Defendiendo el café de origen y a los recolectores locales", "Vendiendo la tierra", "Quemando los cultivos", "Abandonando el país"], correct: 0 },
+                { q: "¿Qué relación hay entre el café y el romance central de la historia?", options: ["Es la metáfora de su amor: paciente, cultivado con esfuerzo y de sabor profundo", "No tiene relación", "Es solo una coincidencia", "Es una marca comercial"], correct: 0 },
+                { q: "¿Cómo reacciona doña Julia ante el origen humilde de Gaviota al principio?", options: ["Con prejuicios de clase social, aunque luego su corazón cambia", "La acepta de inmediato", "Le regala la hacienda", "La contrata como socia"], correct: 0 },
+                { q: "¿Qué rol juega la catación de café en el empoderamiento de Gaviota?", options: ["Le permite viajar a Europa y destacar en el mercado internacional", "Es un pasatiempo", "No le sirve de nada", "La hace perder su empleo"], correct: 0 },
+                { q: "¿Cuál es el sueño más grande que comparten Sebastián y Gaviota?", options: ["Crear su propia marca de café de origen 100% justo y sostenible", "Comprar un yate", "Vivir en la ciudad", "Retirarse jóvenes"], correct: 0 },
+                { q: "¿Qué obstáculo legal enfrenta la familia Vallejo con la herencia de Don Octavio?", options: ["Deudas millonarias ocultas y malos manejos financieros de Iván", "Donación a la caridad", "Pérdida de papeles", "Juicios con el estado"], correct: 0 },
+                { q: "¿Cómo descubre Sebastián la verdad sobre el hijo que espera Gaviota?", options: ["Se entera tras múltiples enredos y pruebas de amor", "Se lo cuenta Lucía", "Lo lee en el periódico", "Nunca se entera"], correct: 0 },
+                { q: "¿Qué actitud toma Lucrecia (la esposa de Iván) frente a los tejemanejes de su marido?", options: ["Sufre en silencio hasta que decide rebelarse y proteger su dignidad", "Lo apoya en todo", "Se convierte en su socia criminal", "Huye con todo el dinero"], correct: 0 },
+                { q: "¿Qué representa la geografía cafetera de Eje Cafetero en la estética de la serie?", options: ["Paisajes exuberantes, verdes, montañas andinas y cultura vibrante", "Un desierto árido", "Una ciudad industrial fría", "Una playa tropical"], correct: 0 },
+                { q: "¿Cómo se llama el personaje entrañable interpretado por Carmen Villalobos (Lucía Sanclemente)?", options: ["Lucía Sanclemente", "Gaviota", "Paula", "Marcela"], correct: 0 },
+                { q: "¿Qué destino sufre Lucía al final de tantas mentiras y obsesión?", options: ["Su castillo de mentiras se desploma, quedando sola y enfrentando sus actos", "Se vuelve millonaria", "Se casa con Sebastián felizmente", "Gana la presidencia"], correct: 0 },
+                { q: "¿Cómo contribuyen los recolectores de café a la trama principal?", options: ["Son la fuerza viva, la familia y el soporte moral de Gaviota", "Son antagonistas", "No aparecen", "Son remplazados por máquinas"], correct: 0 },
+                { q: "¿Qué significa el aroma del café en los momentos clave de reencuentro de la pareja?", options: ["Despierta memorias imborrables de su amor en la hacienda", "Malos recuerdos", "Hambre", "Cansancio"], correct: 0 },
+                { q: "¿Cómo se llama el actor principal que interpreta a Sebastián Vallejo?", options: ["William Levy", "Sebastián Martínez", "Carlos Vives", "Manolo Cardona"], correct: 0 },
+                { q: "¿Qué actriz interpreta magistralmente a Gaviota?", options: ["Laura Londoño", "Carmen Villalobos", "Mabel Moreno", "Kimberly Reyes"], correct: 0 },
+                { q: "¿Cuál es el valor principal que defiende Gaviota frente al corporativismo frío?", options: ["La lealtad a la tierra, el trabajo honesto y la dignidad del campesino", "La riqueza rápida", "El engaño", "El poder político"], correct: 0 },
+                { q: "¿Cómo se resuelve la crisis de la exportación de Café Vallejo?", options: ["Con innovación, calidad superior de origen y unión familiar", "Declarando bancarrota", "Vendiendo a extranjeros", "Cerrando la empresa"], correct: 0 },
+                { q: "¿Qué mensaje final transmite 'Café con aroma de mujer' sobre el amor verdadero?", options: ["Que supera barreras de clases sociales, traiciones y el paso del tiempo", "Que el dinero lo es todo", "Que el amor es efímero", "Que la distancia todo lo borra"], correct: 0 },
+                { q: "¿Por qué esta versión moderna de Café con Aroma de Mujer cautivó al mundo en Netflix?", options: ["Por su potente química actoral, paisajes impresionantes y drama adictivo", "Por sus efectos especiales", "Por ser de ciencia ficción", "Por sus peleas de acción"], correct: 0 }
+            ],
+            cafe2: [
+                { q: "¿Qué cargo corporativo asume Sebastián para rescatar Café Vallejo?", options: ["Presidente / Gerente General", "Recolector raso", "Contador externo", "Jefe de seguridad"], correct: 0 },
+                { q: "¿Qué delitos financieros comete Iván Vallejo a espaldas de la junta?", options: ["Lavado de dinero, fraudes y prestamistas peligrosos", "Robo de autos", "Contrabando de arte", "Falsificación de billetes"], correct: 0 },
+                { q: "¿Cómo apoya Gaviota a Sebastián en la reestructuración de la empresa cafetera?", options: ["Aportando su visión experta del grano, catación y trato con cooperativas", "Buscando inversores corruptos", "Manejonal las finanzas oscuras", "Renunciando"], correct: 0 },
+                { q: "¿Quién descubre las primeras pistas de los desfalcos de Iván en la compañía?", options: ["Sebastián y el equipo financiero leal", "Los recolectores", "Lucía Sanclemente", "La competencia"], correct: 0 },
+                { q: "¿Qué amenaza sufren los Vallejo por parte de los acreedores de Iván?", options: ["Embargo de bienes, pérdida de la hacienda y peligro personal", "Desalojo pacífico", "Demanda laboral", "Multas menores"], correct: 0 },
+                { q: "¿Cómo reacciona Doña Julia al enterarse de las fechorías de su hijo Iván?", options: ["Con dolor inmenso, decepción pero firmeza en la justicia", "Lo encubre para siempre", "Se va de la casa", "Culpa a Gaviota"], correct: 0 },
+                { q: "¿Qué rol juega la cooperativa de caficultores locales en el renacer de la empresa?", options: ["Se alían con Gaviota y Sebastián para un comercio justo y directo", "Les quitan las tierras", "Se van a huelga indefinida", "Fabrican otra bebida"], correct: 0 },
+                { q: "¿Cómo intenta Lucía chantajear a Sebastián en la segunda etapa corporativa?", options: ["Amenazando con destruir el prestigio de la familia y ocultando embarazos/secretos", "Robando la hacienda", "Quemando las bodegas", "Secuestrando al personal"], correct: 0 },
+                { q: "¿Qué decisión toma Sebastián respecto a los errores del pasado con Gaviota?", options: ["Lucha incansablemente por su perdón y por construir un futuro juntos", "La rechaza", "Se casa con Lucía", "Se muda al exterior"], correct: 0 },
+                { q: "¿Cuál es el punto de inflexión donde Gaviota asciende como líder cafetera internacional?", options: ["Cuando gana un certamen mundial de catación y negocios sostenibles", "Cuando hereda otra fortuna", "Cuando se vuelve política", "Cuando se retira"], correct: 0 },
+                { q: "¿Cómo cambia la relación entre Lucrecia e Iván hacia el final de la crisis?", options: ["Lucrecia se independiza, lo abandona y rehace su vida con éxito", "Siguen casados delinquiendo", "Se van juntos a la selva", "Se reconcilian en el lujo"], correct: 0 },
+                { q: "¿Qué significa para la familia Vallejo no perder la Hacienda Casablanca?", options: ["Mantener viva la memoria del abuelo Octavio y su legado de honor", "Solo conservar un negocio costoso", "Un trofeo comercial", "Una inversión inmobiliaria"], correct: 0 },
+                { q: "¿Cómo se logra el repunte bursátil y de exportación de Café Vallejo en el exterior?", options: ["Apostando por café orgánico de origen controlado directamente con campesinos", "Bajando la calidad", "Comprando café barato", "Cerrando mercados"], correct: 0 },
+                { q: "¿Qué papel cumple la amistad de Gaviota con sus compañeras recolectoras al triunfar?", options: ["Jamás olvida sus raíces y las integra al crecimiento de la nueva empresa", "Las despide", "Las ignora por completo", "Se muda de ciudad"], correct: 0 },
+                { q: "¿Cómo se desmoronan los aliados corruptos de Iván Vallejo?", options: ["Detenidos por las autoridades gracias a auditorías forenses", "Huyen a la luna", "Se vuelven socios de Sebastián", "Piden perdón"], correct: 0 },
+                { q: "¿Qué lecciones empresariales deja la gestión de Sebastián y Gaviota?", options: ["La ética, la sostenibilidad y la transparencia superan a la avaricia", "El fin justifica los medios", "El engaño da más dinero", "La soledad en la cima es mejor"], correct: 0 },
+                { q: "¿Cómo reacciona la alta sociedad cafetera ante el liderazgo de Gaviota?", options: ["Primero con escepticismo clasista, luego con profunda admiración y respeto", "La expulsan del país", "La ignoran totalmente", "La aplauden desde el día 1"], correct: 0 },
+                { q: "¿Qué emotiva escena sella el compromiso definitivo entre Sebastián y Gaviota?", options: ["Una romántica boda entre cafetales rodeados de su familia y amigos", "Una ceremonia en la ciudad", "Un matrimonio secreto en Londres", "Un evento corporativo"], correct: 0 },
+                { q: "¿Cuál es el legado definitivo de 'Café con aroma de mujer' en las pantallas?", options: ["Una obra maestra moderna del melodrama romántico y agrícola", "Una comedia ligera", "Un documental histórico", "Un thriller policial"], correct: 0 },
+                { q: "¿Qué frase resume la esencia del café y el amor en la serie?", options: ["'Como el buen café, el amor verdadero requiere tiempo, fuego lento y mucha alma'", "'El café amarga la vida'", "'Todo se compra con dinero'", "'El amor es instantáneo'"], correct: 0 },
+                { q: "¿Qué función cumple el comité directivo de la empresa en los momentos de tensión?", options: ["Debatir entre salvar las finanzas o ceder ante la corrupción de Iván", "Apoyar ciegamente a Iván", "Cerrar la compañía de inmediato", "No hacer nada"], correct: 0 },
+                { q: "¿Cómo se entera Sebastián de las verdaderas dimensiones del fraude de su hermano?", options: ["Mediante una auditoría rigurosa impulsada por él mismo y expertos", "Se lo cuenta un desconocido en la calle", "Lo descubre en una servilleta", "Lo ve en la televisión"], correct: 0 },
+                { q: "¿Qué actitud toma Gaviota ante los ataques y calumnias de Lucía?", options: ["Defiende su honor con trabajo duro, verdad y entereza sin caer en provocaciones", "Responde con violencia", "Huye del país", "Se esconde en la hacienda"], correct: 0 },
+                { q: "¿Cómo impacta la presencia de Doña Julia en la reconciliación familiar?", options: ["Su sabiduría y amor de madre logran unir los pedazos rotos de la familia", "Divide más a sus hijos", "Se desentiende de todo", "Apoya los delitos de Iván"], correct: 0 },
+                { q: "¿Qué destino final judicial le espera a Iván Vallejo por sus actos ilícitos?", options: ["Enfrentar a la justicia y pagar condena por sus delitos económicos", "Quedar impune en el extranjero", "Ser nombrado presidente honorario", "Recibir una medalla"], correct: 0 },
+                { q: "¿Cómo celebran los trabajadores de la hacienda el rescate de Casablanca?", options: ["Con una gran fiesta tradicional cafetera llena de música, alegría y unión", "Con silencio absoluto", "Abandonando las tierras", "Cerrando las puertas"], correct: 0 },
+                { q: "¿Qué significa el título de la serie en el contexto de la victoria final?", options: ["Que el aroma del café de origen y la esencia de Gaviota impregnaron para siempre a la familia", "Una metáfora sin sentido", "Un perfume comercial", "El nombre de un bar"], correct: 0 },
+                { q: "¿Cómo evoluciona la autoestima profesional de Gaviota a lo largo de los negocios?", options: ["Se transforma en una empresaria ejecutiva de clase mundial sin perder su humildad", "Se vuelve soberbia y fría", "Pierde todo su talento", "Depende siempre de otros"], correct: 0 },
+                { q: "¿Qué representa Sebastián Vallejo como empresario al final de la saga?", options: ["Un líder renovado que prioriza el bienestar social y la justicia corporativa", "Un tirano empresarial", "Un empleado fracasado", "Un especulador financiero"], correct: 0 },
+                { q: "¿Cómo se despide la serie de su audiencia fiel en el episodio final?", options: ["Con un mensaje de esperanza, amor eterno y el orgullo cafetalero en alto", "Con un final abierto trágico", "Con una catástrofe natural", "Con un juicio pendiente"], correct: 0 },
+                { q: { q: "¿Qué papel juega la tierra colombiana en la resolución de todos los conflictos?", options: ["Es el santuario de paz, trabajo honesto y sanación para todos los personajes", "Es un lugar peligroso", "Solo sirve para sembrar", "No importa"], correct: 0 } },
+                { q: "¿Cómo equilibra Gaviota su maternidad con sus altas responsabilidades ejecutivas?", options: ["Con el apoyo incondicional de su madre Carmenza y su propia fortaleza", "Abandonando a su hijo", "Dejando el trabajo", "Contratando extraños"], correct: 0 },
+                { q: "¿Qué consejo clave le da Don Octavio en recuerdos a Sebastián?", options: ["Amar la tierra, respetar al trabajador y honrar el apellido con honestidad", "Amasar fortuna a toda costa", "Olvidar el campo", "Desconfiar de todos"], correct: 0 },
+                { q: "¿Cómo se percibe el empoderamiento femenino en la gestión de Gaviota?", options: ["Como un referente inspirador de superación, liderazgo y dignidad", "Como algo pasajero", "Como una imposición", "Como debilidad"], correct: 0 },
+                { q: "¿Qué desafío climático o agrícola deben superar en la hacienda?", options: ["Plagas y retos de producción sostenible que resuelven con ciencia y tradición", "Un terremoto devastador", "Inundación total", "Sequía eterna"], correct: 0 },
+                { q: "¿Cómo influye la música y el folclore colombiano en la atmósfera de Café con Aroma de Mujer?", options: ["A través de hermosas interpretaciones y canciones que exaltan el sentimiento andino", "No hay música en la serie", "Solo música electrónica", "Rock pesado"], correct: 0 },
+                { q: "¿Qué representa Lucía Sanclemente al final de su arco dramático?", options: ["La lección de que la ambición sin escrúpulos destruye a quien la alimenta", "Un ejemplo a seguir", "Una heroína trágica", "Una víctima inocente"], correct: 0 },
+                { q: "¿Cuál es el mayor triunfo de Sebastián Vallejo más allá del dinero?", options: ["Haber recuperado el amor de Gaviota, la dignidad familiar y la paz interior", "Ser el más rico del país", "Comprar más haciendas", "Viajar por el mundo"], correct: 0 },
+                { q: "¿Qué sensación queda en el espectador al finalizar esta gran historia en Netflix?", options: ["Emoción profunda, satisfacción y orgullo por el poder del amor y la tierra", "Vacío y confusión", "Aburrimiento", "Ninguna"], correct: 0 }
+            ]
+        };
+
+        function startGame(catIdx) {
+            selectedCategory = catIdx;
+            currentActiveQuestions = [...questionsData[categories[catIdx].id]];
+            currentQuestionIndex = 0;
+            score = 0;
+            gameState = 'PLAYING';
+            selectedOption = 0;
+            startTimer();
+        }
+
+        function startTimer() {
+            timer = 30;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (gameState === 'PLAYING') {
+                    timer--;
+                    if (timer <= 0) {
+                        handleAnswer(null); // Time out
+                    }
+                }
+            }, 1000);
+        }
+
+        function handleAnswer(optionIdx) {
+            clearInterval(timerInterval);
+            const q = currentActiveQuestions[currentQuestionIndex];
+            
+            if (optionIdx === q.correct) {
+                isCorrect = true;
+                score += 25;
+                feedbackMessage = "¡CORRECTO! +25 PTS";
+            } else {
+                isCorrect = false;
+                feedbackMessage = `INCORRECTO. RESPUESTA: ${q.options[q.correct]}`;
+            }
+
+            gameState = 'FEEDBACK';
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < currentActiveQuestions.length) {
+                    gameState = 'PLAYING';
+                    selectedOption = 0;
+                    startTimer();
+                } else {
+                    gameState = 'VICTORY';
+                    clearInterval(timerInterval);
+                }
+            }, 2000);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (gameState === 'MENU') {
+                if (e.key === 'ArrowUp') {
+                    selectedCategory = (selectedCategory - 1 + categories.length) % categories.length;
+                } else if (e.key === 'ArrowDown') {
+                    selectedCategory = (selectedCategory + 1) % categories.length;
+                } else if (e.key === 'Enter') {
+                    startGame(selectedCategory);
+                }
+            } else if (gameState === 'PLAYING') {
+                if (e.key === 'ArrowUp') {
+                    selectedOption = (selectedOption - 1 + 4) % 4;
+                } else if (e.key === 'ArrowDown') {
+                    selectedOption = (selectedOption + 1) % 4;
+                } else if (e.key === 'Enter') {
+                    handleAnswer(selectedOption);
+                }
+            } else if (gameState === 'VICTORY' || gameState === 'GAMEOVER') {
+                if (e.key === 'Enter') {
+                    gameState = 'MENU';
+                    selectedCategory = 0;
+                }
+            }
+        });
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (gameState === 'MENU') {
+                // Check category clicks
+                categories.forEach((cat, idx) => {
+                    let boxY = 180 + idx * 65;
+                    if (x >= 60 && x <= 580 && y >= boxY && y <= boxY + 50) {
+                        startGame(idx);
+                    }
+                });
+            } else if (gameState === 'PLAYING') {
+                // Check option clicks
+                for (let i = 0; i < 4; i++) {
+                    let optY = 230 + i * 55;
+                    if (x >= 50 && x <= 590 && y >= optY && y <= optY + 45) {
+                        handleAnswer(i);
+                    }
+                }
+            } else if (gameState === 'VICTORY' || gameState === 'GAMEOVER') {
+                if (x >= 220 && x <= 420 && y >= 360 && y <= 410) {
+                    gameState = 'MENU';
+                    selectedCategory = 0;
+                }
+            }
+        });
+
+        function draw() {
+            ctx.fillStyle = '#0b021a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw arcade border frame
+            ctx.strokeStyle = '#e50914';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+
+            if (gameState === 'MENU') {
+                ctx.fillStyle = '#f3f4f6';
+                ctx.font = '16px "Press Start 2P"';
+                ctx.textAlign = 'center';
+                ctx.fillText("SELECCIONA TEMA NETFLIX", canvas.width / 2, 80);
+
+                ctx.font = '9px "Press Start 2P"';
+                ctx.fillStyle = '#9ca3af';
+                ctx.fillText("Usa FLECHAS y ENTER o haz clic", canvas.width / 2, 115);
+
+                categories.forEach((cat, idx) => {
+                    let boxY = 180 + idx * 65;
+                    if (selectedCategory === idx) {
+                        ctx.fillStyle = '#e50914';
+                        ctx.fillRect(56, boxY - 4, 528, 58);
+                        ctx.fillStyle = '#0b021a';
+                    } else {
+                        ctx.fillStyle = '#1e1b4b';
+                        ctx.fillRect(60, boxY, 520, 50);
+                        ctx.fillStyle = '#f3f4f6';
+                    }
+                    ctx.strokeStyle = '#f3f4f6';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(60, boxY, 520, 50);
+
+                    ctx.font = '10px "Press Start 2P"';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(cat.name, 80, boxY + 30);
+                });
+
+            } else if (gameState === 'PLAYING' || gameState === 'FEEDBACK') {
+                // HUD
+                ctx.fillStyle = '#e50914';
+                ctx.font = '10px "Press Start 2P"';
+                ctx.textAlign = 'left';
+                ctx.fillText(`PREG: ${currentQuestionIndex + 1}/${currentActiveQuestions.length}`, 35, 45);
+
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#fbbf24';
+                ctx.fillText(`PTS: ${score}`, canvas.width - 35, 45);
+
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillText(`TIEMPO: ${timer}s`, canvas.width / 2, 45);
+
+                // Question Box
+                const q = currentActiveQuestions[currentQuestionIndex];
+                ctx.fillStyle = '#1e1b4b';
+                ctx.fillRect(35, 70, 570, 130);
+                ctx.strokeStyle = '#e50914';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(35, 70, 570, 130);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '10px "Press Start 2P"';
+                wrapText(ctx, q.q, 50, 100, 540, 16);
+
+                // Options
+                q.options.forEach((opt, idx) => {
+                    let optY = 220 + idx * 60;
+                    if (selectedOption === idx && gameState === 'PLAYING') {
+                        ctx.fillStyle = '#e50914';
+                    } else {
+                        ctx.fillStyle = '#311042';
+                    }
+                    ctx.fillRect(45, optY, 550, 48);
+                    ctx.strokeStyle = '#f3f4f6';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(45, optY, 550, 48);
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '9px "Press Start 2P"';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`${String.fromCharCode(65 + idx)}. ${opt}`, 65, optY + 28);
+                });
+
+                if (gameState === 'FEEDBACK') {
+                    ctx.fillStyle = 'rgba(11, 2, 26, 0.9)';
+                    ctx.fillRect(35, 200, 570, 250);
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = isCorrect ? '#4ade80' : '#f87171';
+                    ctx.font = '14px "Press Start 2P"';
+                    ctx.fillText(feedbackMessage, canvas.width / 2, 330);
+                }
+
+            } else if (gameState === 'VICTORY') {
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = '16px "Press Start 2P"';
+                ctx.fillText("¡MISIÓN CUMPLIDA!", canvas.width / 2, 120);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '11px "Press Start 2P"';
+                ctx.fillText(`PUNTAJE FINAL: ${score} / ${currentActiveQuestions.length * 25}`, canvas.width / 2, 180);
+
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillText("¡Eres un experto total en Netflix!", canvas.width / 2, 230);
+
+                // Restart button
+                ctx.fillStyle = '#e50914';
+                ctx.fillRect(200, 350, 240, 50);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(200, 350, 240, 50);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '10px "Press Start 2P"';
+                ctx.fillText("MENÚ PRINCIPAL", canvas.width / 2, 381);
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        function wrapText(context, text, x, y, maxWidth, lineHeight) {
+            let words = text.split(' ');
+            let line = '';
+            for(let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                let metrics = context.measureText(testLine);
+                let testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    context.fillText(line, x, y);
+                    line = words[n] + ' ';
+                    y += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            context.fillText(line, x, y);
+        }
+
+        // Start animation loop
+        window.onload = function() {
+            draw();
+        };
+    </script>
+</body>
+</html>
