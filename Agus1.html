@@ -1,0 +1,352 @@
+<
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 99999;!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident Evil 16-Bit Quiz</title>
+    <!-- Tailwind CSS for utility styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for retro arcade pixel style look -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background-color: #0d0d0d;
+            color: #d1d5db;
+            overflow-x: hidden;
+        }
+
+        /* CRT Screen effect lines */
+        .crt::after {
+            content: " ";
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+        }
+
+        /* Scanline flicker */
+        @keyframes flicker {
+            0% { opacity: 0.97; }
+            50% { opacity: 1; }
+            100% { opacity: 0.98; }
+        }
+
+        .flicker {
+            animation: flicker 0.15s infinite;
+        }
+
+        /* Custom scrollbar and pixel borders */
+        .pixel-border {
+            box-shadow: 
+                -4px 0px 0px 0px #1f2937,
+                4px 0px 0px 0px #1f2937,
+                0px -4px 0px 0px #1f2937,
+                0px 4px 0px 0px #1f2937;
+        }
+
+        .pixel-btn {
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+        .pixel-btn:active {
+            transform: scale(0.97);
+        }
+    </style>
+</head>
+<body class="crt flicker min-h-screen flex flex-col items-center justify-center p-4">
+
+    <header class="text-center mb-6">
+        <h1 class="text-red-600 text-xl md:text-3xl tracking-widest uppercase drop-shadow-[0_4px_4px_rgba(220,38,38,0.5)]">
+            RESIDENT EVIL
+        </h1>
+        <p class="text-xs text-gray-400 mt-2">EDICIÓN RETRO 16-BIT // 5 PREGUNTAS FÁCILES</p>
+    </header>
+
+    <main id="game-container" class="w-full max-w-xl bg-gray-900 border-4 border-red-900 p-6 rounded shadow-2xl relative pixel-border">
+        
+        <!-- Welcome Screen -->
+        <div id="screen-welcome" class="text-center space-y-6 py-6">
+            <div class="inline-block p-4 bg-red-950 border-2 border-red-600 text-red-400 text-xs leading-relaxed">
+                [ALERTA DE BIOHAZARD]<br>
+                Demuestra tus conocimientos sobre el universo de Capcom. Sobrevive a este test de 5 preguntas sencillas para escapar de Raccoon City.
+            </div>
+            <div>
+                <button onclick="startGame()" class="px-6 py-3 bg-red-700 hover:bg-red-600 text-white text-xs uppercase tracking-wider border-2 border-red-400 pixel-btn cursor-pointer">
+                    INICIAR PARTIDA
+                </button>
+            </div>
+        </div>
+
+        <!-- Question Screen -->
+        <div id="screen-quiz" class="hidden space-y-6">
+            <div class="flex justify-between items-center text-xs text-gray-400 border-b border-gray-800 pb-3">
+                <span id="question-counter">PREGUNTA 1/5</span>
+                <span id="score-display" class="text-green-500">ACIERTOS: 0</span>
+            </div>
+
+            <div class="bg-gray-950 p-4 border border-gray-800 rounded min-h-[90px] flex items-center">
+                <p id="question-text" class="text-xs md:text-sm leading-relaxed text-gray-200"></p>
+            </div>
+
+            <div id="options-container" class="grid grid-cols-1 gap-3">
+                <!-- Dynamic options generated via JS -->
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="screen-result" class="hidden text-center space-y-6 py-4">
+            <h2 id="result-title" class="text-lg md:text-xl text-red-500 uppercase">MISION CUMPLIDA</h2>
+            <p id="result-message" class="text-xs leading-relaxed text-gray-300"></p>
+            <div class="p-4 bg-black border border-red-900 text-sm" id="final-score-box">
+                Puntuación final
+            </div>
+            <div>
+                <button onclick="restartGame()" class="px-6 py-3 bg-red-700 hover:bg-red-600 text-white text-xs uppercase tracking-wider border-2 border-red-400 pixel-btn cursor-pointer">
+                    JUGAR DE NUEVO
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Definición de las 20 preguntas de Resident Evil (5 originales + 15 nuevas) con la estructura solicitada
+        const questions = [
+            {
+                question: "¿Cómo se llama la famosa compañía farmacéutica responsable de la epidemia zombie?",
+                options: ["Trish Corporation", "Umbrella Corporation", "BioTech Industries", "Raccoon Labs"],
+                answer: 1
+            },
+            {
+                question: "¿Cuál es el nombre del primer personaje principal femenino y miembro de S.T.A.R.S. que aparece en la mansión?",
+                options: ["Ada Wong", "Claire Redfield", "Jill Valentine", "Sherry Birkin"],
+                answer: 2
+            },
+            {
+                question: "¿En qué ciudad estadounidense ficticia ocurren los eventos principales de Resident Evil 2 y 3?",
+                options: ["Raccoon City", "Silent Hill", "Arklay Town", "Boston"],
+                answer: 0
+            },
+            {
+                question: "¿Qué nombre recibe el icónico policía novato que llega a Raccoon City en su primer día de trabajo?",
+                options: ["Albert Wesker", "Chris Redfield", "Leon S. Kennedy", "Barry Burton"],
+                answer: 2
+            },
+            {
+                question: "¿Cuál es el nombre del legendario líder traidor del equipo S.T.A.R.S. (Alfa) que lleva gafas de sol oscuras?",
+                options: ["Albert Wesker", "Enrico Marini", "Brad Vickers", "George Trevor"],
+                answer: 0
+            },
+            {
+                question: "¿Qué tipo de planta curativa verde es la más común y famosa para recuperar salud en la saga?",
+                options: ["Hierba Verde", "Hierba Roja", "Hierba Azul", "Hierba Amarilla"],
+                answer: 0
+            },
+            {
+                question: "¿Cuál es el nombre del hermano de Claire Redfield y protagonista de Resident Evil 1 y Code: Veronica?",
+                options: ["Carlos Oliveira", "Chris Redfield", "HUNK", "Billy Coen"],
+                answer: 1
+            },
+            {
+                question: "¿Qué monstruo gigante con gabardina y sombrero persigue implacablemente a los protagonistas en Resident Evil 2?",
+                options: ["Nemesis", "Tyrant (Mr. X)", "William Birkin", "Licker"],
+                answer: 1
+            },
+            {
+                question: "¿Cómo se llama la misteriosa espía y agente secreta que a menudo ayuda o coquetea con Leon S. Kennedy?",
+                options: ["Sherry Birkin", "Rebecca Chambers", "Ada Wong", "Excella Gionne"],
+                answer: 2
+            },
+            {
+                question: "¿Qué criatura mutante ciega con un cerebro expuesto y garras afiladas acecha los pasillos en Resident Evil 2?",
+                options: ["Hunter", "Licker", "Cerberus", "Zombie"],
+                answer: 1
+            },
+            {
+                question: "¿Cuál es el nombre del perro zombi mutado que aparece rompiendo una ventana en la mansión?",
+                options: ["Cerberus", "Fido", "Fang", "Wolf"],
+                answer: 0
+            },
+            {
+                question: "¿Qué objeto clásico en forma de llave con diseño especial se necesita habitualmente para abrir puertas específicas en la mansión?",
+                options: ["Llave de tuerca", "Llave con diseño de espada/escudo", "Tarjeta magnética", "Llave inglesa"],
+                answer: 1
+            },
+            {
+                question: "¿Quién es la joven y brillante miembro médico novata del equipo S.T.A.R.S. (Bravo) en Resident Evil 0 y 1?",
+                options: ["Rebecca Chambers", "Helena Harper", "Sheva Alomar", "Manuela"],
+                answer: 0
+            },
+            {
+                question: "¿Qué arma pesada icónica y clásica suele desbloquearse al completar el juego con una puntuación perfecta?",
+                options: ["Lanzacohetes infinito", "Pistola de balines", "Honda", "Arco de juguete"],
+                answer: 0
+            },
+            {
+                question: "¿Cómo se llama el implacable enemigo mutante enviado por Umbrella en Resident Evil 3 que grita '¡STARS!'?",
+                options: ["Nemesis", "Mr. X", "Ustanak", "Salvador"],
+                answer: 0
+            },
+            {
+                question: "¿Qué bebida o elemento químico se utiliza comúnmente en algunos juegos para salvar la partida en máquinas de escribir?",
+                options: ["Cinta de tinta", "Disquete", "Memoria USB", "Grabadora"],
+                answer: 0
+            },
+            {
+                question: "¿Qué nombre recibe el científico que se inyecta el virus G transformándose en un monstruo horrible en Resident Evil 2?",
+                options: ["William Birkin", "Alex Wesker", "Ozwell E. Spencer", "James Marcus"],
+                answer: 0
+            },
+            {
+                question: "¿Cuál es el nombre del compañero ex-convicto de Rebecca Chambers en Resident Evil 0?",
+                options: ["Billy Coen", "Luis Sera", "Carlos Oliveira", "Piers Nivans"],
+                answer: 0
+            },
+            {
+                question: "¿Qué medio de transporte principal utilizan los personajes para escapar de Raccoon City antes de su destrucción?",
+                options: ["Un helicóptero de rescate", "Un tren subterráneo / Patrulla", "Un barco pirata", "Un globo aerostático"],
+                answer: 1
+            },
+            {
+                question: "¿Qué color de hierba combinada con la verde aumenta la barra máxima de salud del jugador?",
+                options: ["Hierba Amarilla", "Hierba Morada", "Hierba Blanca", "Hierba Naranja"],
+                answer: 0
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        // Simple Web Audio API sound generator for retro arcade beeps
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'click') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } else if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        function startGame() {
+            playSound('click');
+            currentQuestionIndex = 0;
+            score = 0;
+            document.getElementById('screen-welcome').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQuestionIndex];
+            document.getElementById('question-counter').innerText = `PREGUNTA ${currentQuestionIndex + 1}/${questions.length}`;
+            document.getElementById('score-display').innerText = `ACIERTOS: ${score}`;
+            document.getElementById('question-text').innerText = q.question;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3 bg-gray-950 hover:bg-gray-800 border border-gray-700 rounded text-xs text-gray-300 transition pixel-btn flex items-center space-x-2 cursor-pointer";
+                btn.innerHTML = `<span class="text-red-500 font-bold mr-2">[>]</span> ${opt}`;
+                btn.onclick = () => selectOption(index);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectOption(selectedIndex) {
+            const q = questions[currentQuestionIndex];
+            const buttons = document.getElementById('options-container').children;
+
+            // Disable all buttons to prevent double clicking
+            for (let b of buttons) {
+                b.disabled = true;
+            }
+
+            if (selectedIndex === q.answer) {
+                playSound('correct');
+                buttons[selectedIndex].classList.remove('bg-gray-950', 'hover:bg-gray-800');
+                buttons[selectedIndex].classList.add('bg-green-900', 'border-green-500', 'text-white');
+                score++;
+            } else {
+                playSound('wrong');
+                buttons[selectedIndex].classList.remove('bg-gray-950', 'hover:bg-gray-800');
+                buttons[selectedIndex].classList.add('bg-red-950', 'border-red-500', 'text-white');
+                // Highlight correct answer
+                buttons[q.answer].classList.remove('bg-gray-950', 'hover:bg-gray-800');
+                buttons[q.answer].classList.add('bg-green-950', 'border-green-600', 'text-white');
+            }
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    loadQuestion();
+                } else {
+                    showResult();
+                }
+            }, 1200);
+        }
+
+        function showResult() {
+            document.getElementById('screen-quiz').classList.add('hidden');
+            document.getElementById('screen-result').classList.remove('hidden');
+
+            const titleElem = document.getElementById('result-title');
+            const msgElem = document.getElementById('result-message');
+            const scoreBox = document.getElementById('final-score-box');
+
+            scoreBox.innerText = `Aciertos: ${score} / ${questions.length}`;
+
+            if (score === questions.length) {
+                titleElem.innerText = "¡SOBREVIVIENTE DE ELITE!";
+                msgElem.innerText = "¡Increíble! Has dominado todas las preguntas de Raccoon City sin un solo fallo.";
+            } else if (score >= 12) {
+                titleElem.innerText = "¡HAS ESCAPADO CON VIDA!";
+                msgElem.innerText = "Demostró gran conocimiento del survival horror. ¡Sobreviviste a la pesadilla!";
+            } else {
+                titleElem.innerText = "¡HAS MUERTO (GAME OVER)!";
+                msgElem.innerText = "Te has convertido en un bocadillo para zombies. ¡Vuelve a intentarlo!";
+                playSound('wrong');
+            }
+        }
+
+        function restartGame() {
+            playSound('click');
+            document.getElementById('screen-result').classList.add('hidden');
+            document.getElementById('screen-welcome').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
