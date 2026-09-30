@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Retro Pixel Art - Deportes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background-color: #0f172a;
+            color: #f8fafc;
+            image-rendering: pixelated;
+        }
+        .pixel-box {
+            box-shadow: 4px 4px 0px #000000;
+            border: 4px solid #38bdf8;
+        }
+        .pixel-btn {
+            box-shadow: 4px 4px 0px #0284c7;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .pixel-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px #0284c7;
+        }
+        .pixel-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #0284c7;
+        }
+        .pixel-btn-option {
+            box-shadow: 4px 4px 0px #1e293b;
+            border: 3px solid #64748b;
+        }
+        .pixel-btn-option:hover {
+            background-color: #334155;
+            border-color: #38bdf8;
+        }
+        /* CRT scanlines effect */
+        .scanlines {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.06),
+                rgba(0, 255, 0, 0.02),
+                rgba(0, 0, 255, 0.06)
+            );
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-x-hidden">
+
+    <div class="absolute inset-0 scanlines z-50 pointer-events-none"></div>
+
+    <div id="game-container" class="w-full max-w-2xl bg-slate-900 pixel-box p-6 md:p-8 rounded-none relative z-10">
+        
+        <!-- Header / Stats -->
+        <div class="flex justify-between items-center mb-6 border-b-4 border-sky-500 pb-4 text-xs md:text-sm">
+            <div id="score-display" class="text-emerald-400">SCORE: <span id="score">0</span></div>
+            <div id="question-counter" class="text-amber-400">PREG: <span id="current-q">1</span>/<span id="total-q">50</span></div>
+            <div id="timer-display" class="text-rose-400">TIME: <span id="timer">15</span>s</div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center py-8">
+            <div class="text-3xl md:text-5xl mb-6 text-sky-400 animate-pulse">⚽ DEPORTE QUIZ 🏆</div>
+            <p class="text-xs md:text-sm text-slate-300 mb-8 leading-relaxed">¡Pon a prueba tus conocimientos deportivos con 50 preguntas! Tienes 15 segundos por cada una.</p>
+            <button onclick="startGame()" class="pixel-btn bg-emerald-500 text-slate-950 font-bold py-4 px-8 text-sm md:text-lg border-4 border-emerald-700 cursor-pointer uppercase">
+                ¡EMPEZAR JUEGO!
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div id="question-text" class="text-xs md:text-sm text-slate-100 mb-6 leading-relaxed bg-slate-800 p-4 border-2 border-slate-700">
+                <!-- Question loaded via JS -->
+            </div>
+            
+            <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Options loaded via JS -->
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="hidden text-center py-6">
+            <h2 class="text-2xl md:text-4xl text-rose-500 mb-4 font-bold">¡FIN DEL JUEGO!</h2>
+            <p class="text-xs md:text-sm text-slate-300 mb-4">Puntuación Final:</p>
+            <div id="final-score" class="text-3xl md:text-5xl text-amber-400 mb-8">0 PTS</div>
+            <div id="feedback-message" class="text-xs text-sky-300 mb-6"></div>
+            <button onclick="startGame()" class="pixel-btn bg-sky-500 text-slate-950 font-bold py-4 px-8 text-sm md:text-lg border-4 border-sky-700 cursor-pointer uppercase">
+                JUGAR DE NUEVO
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Synth setup for retro sound effects using Tone.js
+        const synth = new Tone.Synth({
+            oscillator: { type: "square" },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 }
+        }).toDestination();
+
+        function playSound(type) {
+            try {
+                if (Tone.context.state !== 'running') {
+                    Tone.start();
+                }
+                const now = Tone.now();
+                if (type === 'click') {
+                    synth.triggerAttackRelease("C5", "32n", now);
+                } else if (type === 'correct') {
+                    synth.triggerAttackRelease("E5", "16n", now);
+                    synth.triggerAttackRelease("G5", "8n", now + 0.1);
+                } else if (type === 'wrong') {
+                    synth.triggerAttackRelease("C3", "8n", now);
+                } else if (type === 'start') {
+                    synth.triggerAttackRelease("G4", "16n", now);
+                    synth.triggerAttackRelease("C5", "8n", now + 0.15);
+                }
+            } catch (e) {
+                console.log("Audio context prevented or not supported", e);
+            }
+        }
+
+        const questions = [
+            { q: "¿En qué país se originó el fútbol moderno en el siglo XIX?", options: ["Brasil", "Inglaterra", "Italia", "Argentina"], answer: 1 },
+            { q: "¿Cuántos jugadores forman un equipo titular en el campo en un partido de fútbol reglamentario?", options: ["9", "10", "11", "12"], answer: 2 },
+            { q: "¿Qué país ganó la Copa Mundial de la FIFA en el año 2014?", options: ["Alemania", "Argentina", "España", "Brasil"], answer: 0 },
+            { q: "¿Cada cuántos años se celebran los Juegos Olímpicos de Verano?", options: ["2 años", "3 años", "4 años", "5 años"], answer: 2 },
+            { q: "¿Cómo se llama el torneo de tenis más antiguo del mundo, jugado sobre césped?", options: ["US Open", "Roland Garros", "Wimbledon", "Abierto de Australia"], answer: 2 },
+            { q: "¿Qué distancia exacta tiene una carrera de maratón?", options: ["40.195 km", "42.195 km", "45.000 km", "38.500 km"], answer: 1 },
+            { q: "¿En qué deporte se utiliza un 'puck' o disco en lugar de una pelota?", options: ["Hockey sobre césped", "Hockey sobre hielo", "Polo", "Lacrosse"], answer: 1 },
+            { q: "¿Cuál es el color de la tarjeta que indica la expulsión directa de un jugador en el fútbol?", options: ["Amarilla", "Verde", "Roja", "Azul"], answer: 2 },
+            { q: "¿Qué legendario basquetbolista usó el número 23 en los Chicago Bulls?", options: ["Kobe Bryant", "LeBron James", "Michael Jordan", "Magic Johnson"], answer: 2 },
+            { q: "¿En qué deporte compiten los equipos por la Copa Stanley?", options: ["Béisbol", "Hockey sobre hielo", "Fútbol americano", "Baloncesto"], answer: 1 },
+            { q: "¿Cuántos puntos vale un tiro libre encestado en el baloncesto?", options: ["1 punto", "2 puntos", "3 puntos", "4 puntos"], answer: 0 },
+            { q: "¿Qué ciclista tiene el récord de más victorias de etapa en el Tour de Francia?", options: ["Eddy Merckx", "Mark Cavendish", "Bernard Hinault", "Miguel Indurain"], answer: 1 },
+            { q: "¿Cómo se denomina la máxima puntuación posible en una sola jugada de bowling (bolos)?", options: ["200", "250", "300", "3000"], answer: 2 },
+            { q: "¿Qué arte marcial mixto o deporte de combate utiliza una jaula octagonal?", options: ["Boxeo", "Judo", "UFC / Artes Marciales Mixtas", "Lucha Libre"], answer: 2 },
+            { q: "¿En qué deporte se utiliza el término 'slam dunk'?", options: ["Tenis", "Baloncesto", "Voleibol", "Béisbol"], answer: 1 },
+            { q: "¿Qué selección nacional de rugby es conocida mundialmente como los 'All Blacks'?", options: ["Australia", "Sudáfrica", "Nueva Zelanda", "Inglaterra"], answer: 2 },
+            { q: "¿Cuál es la duración reglamentaria de un partido de fútbol profesional (sin prórroga)?", options: ["80 minutos", "90 minutos", "100 minutos", "60 minutos"], answer: 1 },
+            { q: "¿Qué país alberga el torneo de tenis de Roland Garros?", options: ["Estados Unidos", "Reino Unido", "Francia", "Australia"], answer: 2 },
+            { q: "¿Qué nombre recibe el campeonato anual de automovilismo de velocidad más importante del mundo?", options: ["Rally Dakar", "Fórmula 1", "IndyCar", "24 Horas de Le Mans"], answer: 1 },
+            { q: "¿Cuántos jugadores hay en la cancha por cada equipo en un partido oficial de baloncesto?", options: ["4", "5", "6", "7"], answer: 1 },
+            { q: "¿En qué deporte se compite por la 'Clasificación de la Montaña' y el 'Maillot Amarillo'?", options: ["Ciclismo", "Atletismo", "Natación", "Esquí"], answer: 0 },
+            { q: "¿Qué deportista es considerado el rey de la velocidad y ostenta los récords mundiales de 100m y 200m?", options: ["Carl Lewis", "Usain Bolt", "Justin Gatlin", "Tyson Gay"], answer: 1 },
+            { q: "¿Cuál es el único Grand Slam de tenis que se juega sobre superficie de arcilla o polvo de ladrillo?", options: ["Wimbledon", "US Open", "Roland Garros", "Abierto de Australia"], answer: 2 },
+            { q: "¿En qué deporte se emplea un palo con una red en el extremo para atrapar y lanzar una pelota?", options: ["Críquet", "Lacrosse", "Polo", "Bádminton"], answer: 1 },
+            { q: "¿Qué equipo ganó la Super Bowl LV (55) en la NFL liderado por Tom Brady?", options: ["Kansas City Chiefs", "Tampa Bay Buccaneers", "New England Patriots", "Green Bay Packers"], answer: 1 },
+            { q: "¿Cómo se llama el evento deportivo internacional cuatrienal exclusivo para atletas con discapacidad?", options: ["Juegos Olímpicos", "Juegos Paralímpicos", "Juegos Invictus", "Universiada"], answer: 1 },
+            { q: "¿Qué país ganó la Copa Mundial de Fútbol de la FIFA en 2022 en Qatar?", options: ["Francia", "Croacia", "Argentina", "Brasil"], answer: 2 },
+            { q: "¿Qué arte marcial de origen japonés se traduce como 'el camino suave'?", options: ["Karate", "Judo", "Aikido", "Sumo"], answer: 1 },
+            { q: "¿En qué deporte se utiliza una escoba y una piedra de granito sobre una pista de hielo?", options: ["Biatlón", "Curling", "Patinaje artístico", "Bobsleigh"], answer: 1 },
+            { q: "¿Qué nombre recibe el golpe directo que tumba a un boxeador sin que pueda levantarse en 10 segundos?", options: ["Knockout (KO)", "Jab", "Uppercut", "Foul"], answer: 0 },
+            { q: "¿Cuántos anillos forman el símbolo oficial de los Juegos Olímpicos?", options: ["4", "5", "6", "7"], answer: 1 },
+            { q: "¿Cuál es el deporte nacional oficial de Canadá (junto con el hockey sobre hielo)?", options: ["Béisbol", "Lacrosse", "Baloncesto", "Críquet"], answer: 1 },
+            { q: "¿Qué nadador olímpico estadounidense ostenta el récord de mayor cantidad de medallas de oro en la historia?", options: ["Mark Spitz", "Ryan Lochte", "Michael Phelps", "Caeleb Dressel"], answer: 2 },
+            { q: "¿En qué deporte se utiliza un volante, pluma o gallito en lugar de una pelota?", options: ["Tenis de mesa", "Bádminton", "Squash", "Pádel"], answer: 1 },
+            { q: "¿Qué seleccionador dirigió a la selección de España en su histórico título mundial de fútbol en 2010?", options: ["Luis Aragonés", "Vicente del Bosque", "Pep Guardiola", "Luis Enrique"], answer: 1 },
+            { q: "¿Cuántas bases hay en el campo de juego de béisbol (sin contar el home)?", options: ["2", "3", "4", "5"], answer: 1 },
+            { q: "¿Qué ciclista español ganó cinco veces consecutivas el Tour de Francia?", options: ["Alberto Contador", "Miguel Indurain", "Óscar Pereiro", "Federico Martín Bahamontes"], answer: 1 },
+            { q: "¿Qué país es famoso por ser el hogar del sumo, su deporte nacional tradicional?", options: ["China", "Corea del Sur", "Japón", "Tailandia"], answer: 2 },
+            { q: "¿En qué deporte se utiliza el término 'birdie' y 'bogey'?", options: ["Golf", "Tenis", "Críquet", "Billar"], answer: 0 },
+            { q: "¿Qué gran premio de Fórmula 1 se disputa tradicionalmente en las calles del principado de Mónaco?", options: ["Gran Premio de Italia", "Gran Premio de Mónaco", "Gran Premio de Gran Bretaña", "Gran Premio de España"], answer: 1 },
+            { q: "¿Cómo se llama el campo donde se practica el golf?", options: ["Cancha", "Campo o Green", "Ring", "Pista"], answer: 1 },
+            { q: "¿Qué selección nacional ganó la primera Copa Mundial de Fútbol de la historia en 1930?", options: ["Brasil", "Argentina", "Uruguay", "Italia"], answer: 2 },
+            { q: "¿En qué deporte compiten los equipos por la Copa América en Sudamérica?", options: ["Baloncesto", "Fútbol", "Rugby", "Voleibol"], answer: 1 },
+            { q: "¿Qué es un 'homerun' en el béisbol?", options: ["Una falta técnica", "Un batazo que saca la pelota del campo permitiendo anotar", "Un strike cantado", "Un cambio de lanzador"], answer: 1 },
+            { q: "¿Cuántos jugadores conforman un equipo en el voleibol de sala?", options: ["5", "6", "7", "8"], answer: 1 },
+            { q: "¿Quién es considerado el máximo goleador histórico de la UEFA Champions League?", options: ["Lionel Messi", "Cristiano Ronaldo", "Robert Lewandowski", "Karim Benzema"], answer: 1 },
+            { q: "¿Qué deporte practica el famoso atleta Eliud Kipchoge, considerado el mejor maratonista de la historia?", options: ["Ciclismo", "Atletismo (Maratón)", "Triatlón", "Gimnasia"], answer: 1 },
+            { q: "¿En qué país se inventó el baloncesto (basketball) a finales del siglo XIX?", options: ["Canadá", "Estados Unidos", "Inglaterra", "Francia"], answer: 1 },
+            { q: "¿Cómo se denomina la falta cometida con las manos por un jugador de campo en el fútbol?", options: ["Offside", "Mano", "Foul táctico", "Penalti indirecto"], answer: 1 },
+            { q: "¿Qué competencia ciclista forma parte de las tres Grandes Vueltas junto al Tour de Francia y el Giro de Italia?", options: ["Vuelta a España", "Tour de Suiza", "Paris-Nice", "Critérium du Dauphiné"], answer: 0 }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timer;
+        let timeLeft = 15;
+        let isAnsweringLocked = false;
+
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const gameoverScreen = document.getElementById('gameover-screen');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const scoreEl = document.getElementById('score');
+        const currentQEl = document.getElementById('current-q');
+        const totalQEl = document.getElementById('total-q');
+        const timerEl = document.getElementById('timer');
+        const finalScoreEl = document.getElementById('final-score');
+        const feedbackMessage = document.getElementById('feedback-message');
+
+        totalQEl.textContent = questions.length;
+
+        function startGame() {
+            playSound('start');
+            currentQuestionIndex = 0;
+            score = 0;
+            scoreEl.textContent = score;
+            startScreen.classList.add('hidden');
+            gameoverScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                endGame();
+                return;
+            }
+
+            isAnsweringLocked = false;
+            currentQEl.textContent = currentQuestionIndex + 1;
+            const currentQ = questions[currentQuestionIndex];
+            questionText.textContent = currentQ.q;
+
+            optionsContainer.innerHTML = '';
+            currentQ.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'pixel-btn-option bg-slate-800 text-slate-200 p-4 text-left text-xs md:text-sm font-bold cursor-pointer transition-colors';
+                btn.textContent = `${String.fromCharCode(65 + index)}. ${option}`;
+                btn.onclick = () => selectOption(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            resetTimer();
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            timeLeft = 15;
+            timerEl.textContent = timeLeft;
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    handleTimeout();
+                }
+            }, 1000);
+        }
+
+        function handleTimeout() {
+            if (isAnsweringLocked) return;
+            isAnsweringLocked = true;
+            playSound('wrong');
+            
+            // Highlight correct answer
+            const currentQ = questions[currentQuestionIndex];
+            const buttons = optionsContainer.children;
+            buttons[currentQ.answer].classList.add('bg-emerald-900', 'border-emerald-500');
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                loadQuestion();
+            }, 1500);
+        }
+
+        function selectOption(selectedIndex, selectedBtn) {
+            if (isAnsweringLocked) return;
+            isAnsweringLocked = true;
+            clearInterval(timer);
+            playSound('click');
+
+            const currentQ = questions[currentQuestionIndex];
+            const buttons = optionsContainer.children;
+
+            if (selectedIndex === currentQ.answer) {
+                playSound('correct');
+                selectedBtn.classList.add('bg-emerald-900', 'border-emerald-400', 'text-emerald-300');
+                score += 10 + (timeLeft * 2); // Bonus for remaining time
+                scoreEl.textContent = score;
+            } else {
+                playSound('wrong');
+                selectedBtn.classList.add('bg-rose-900', 'border-rose-500', 'text-rose-300');
+                buttons[currentQ.answer].classList.add('bg-emerald-900', 'border-emerald-500', 'text-emerald-300');
+            }
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                loadQuestion();
+            }, 1500);
+        }
+
+        function endGame() {
+            quizScreen.classList.add('hidden');
+            gameoverScreen.classList.remove('hidden');
+            finalScoreEl.textContent = score + " PTS";
+
+            let msg = "";
+            if (score >= 800) {
+                msg = "¡LEYENDA DEL DEPORTE! Lo sabes absolutamente todo 🏆";
+            } else if (score >= 400) {
+                msg = "¡EXCELENTE! Tienes un gran dominio deportivo 🏅";
+            } else {
+                msg = "¡BUEN INTENTO! Sigue practicando para subir de nivel ⚽";
+            }
+            feedbackMessage.textContent = msg;
+        }
+    </script>
+</body>
+</html>
